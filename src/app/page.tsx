@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
 
@@ -20,29 +20,25 @@ const LineIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function LoginPage() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
-      <Card className="w-full max-w-md shadow-2xl">
+      <Card className="w-full max-w-sm shadow-2xl">
         <CardHeader className="text-center">
             <div className="flex justify-center items-center mb-4">
                 <BookOpen className="w-12 h-12 text-primary" />
             </div>
-          <h1 className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</h1>
-          <CardDescription className="text-foreground/80 pt-2">Sign in to create and take exams with ease</CardDescription>
+          <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-6 pb-6">
           <Link href="/dashboard" passHref>
             <Button className="w-full h-12 text-lg" variant="default">
-              <GoogleIcon className="mr-3 h-6 w-6" /> เข้าสู่ระบบด้วย Google
+              Sign in with Google
             </Button>
           </Link>
           <Link href="/dashboard" passHref>
-            <Button className="w-full h-12 text-lg bg-[#00C300] hover:bg-[#00C300]/90 text-white">
-              <LineIcon className="mr-3 h-6 w-6" /> เข้าสู่ระบบด้วย Line
+            <Button className="w-full h-12 text-lg bg-[#00B900] hover:bg-[#00B900]/90 text-white">
+              Sign in with Line
             </Button>
           </Link>
         </CardContent>
-        <CardFooter>
-            <p className="text-xs text-muted-foreground text-center w-full">By signing in, you agree to our Terms of Service.</p>
-        </CardFooter>
       </Card>
     </main>
   );
