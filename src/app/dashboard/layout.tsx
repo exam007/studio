@@ -12,7 +12,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <SidebarHeader>
                         <div className="flex items-center gap-2 p-2">
                            <BookOpen className="w-8 h-8 text-primary"/>
-                           <h2 className="text-2xl font-headline font-semibold text-primary">Examplify</h2>
+                           <h2 className="text-2xl font-headline font-semibold text-primary">แนวข้อสอบ</h2>
                         </div>
                     </SidebarHeader>
                     <SidebarContent>

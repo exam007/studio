@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Examplify',
+  title: 'แนวข้อสอบ',
   description: 'Create and take exams with ease.',
 };
 

@@ -25,7 +25,7 @@ export default function LoginPage() {
             <div className="flex justify-center items-center mb-4">
                 <BookOpen className="w-12 h-12 text-primary" />
             </div>
-          <h1 className="text-4xl font-headline font-bold text-primary">Examplify</h1>
+          <h1 className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</h1>
           <CardDescription className="text-foreground/80 pt-2">Sign in to create and take exams with ease</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
