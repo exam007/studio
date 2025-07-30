@@ -31,12 +31,12 @@ export default function LoginPage() {
         <CardContent className="space-y-4">
           <Link href="/dashboard" passHref>
             <Button className="w-full h-12 text-lg" variant="default">
-              <GoogleIcon className="mr-3 h-6 w-6" /> Sign in with Google
+              <GoogleIcon className="mr-3 h-6 w-6" /> เข้าสู่ระบบด้วย Google
             </Button>
           </Link>
           <Link href="/dashboard" passHref>
             <Button className="w-full h-12 text-lg bg-[#00C300] hover:bg-[#00C300]/90 text-white">
-              <LineIcon className="mr-3 h-6 w-6" /> Sign in with Line
+              <LineIcon className="mr-3 h-6 w-6" /> เข้าสู่ระบบด้วย Line
             </Button>
           </Link>
         </CardContent>
