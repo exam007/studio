@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload } from "lucide-react";
+import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/components/ui/use-toast";
+import Link from "next/link";
 
 type Exam = {
     id: string;
@@ -160,18 +161,37 @@ export default function AdminDashboardPage() {
                  <Card>
                     <CardHeader>
                         <CardTitle>จัดการสิทธิ์ข้อสอบ</CardTitle>
-                        <CardDescription>กำหนดสิทธิ์ให้ผู้ใช้เข้าถึงข้อสอบแต่ละชุด</CardDescription>
-                         <div className="flex gap-2 pt-2">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="ค้นหาด้วย Email หรือรหัสข้อสอบ..." className="pl-8 w-full" />
-                            </div>
-                            <Button><PlusCircle className="mr-2" /> เพิ่มสิทธิ์</Button>
+                        <CardDescription>เลือกข้อสอบเพื่อจัดการสิทธิ์การเข้าถึงของผู้ใช้</CardDescription>
+                         <div className="relative pt-2">
+                            <Search className="absolute left-2.5 top-4 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="ค้นหาด้วยชื่อหรือรหัสข้อสอบ..." className="pl-8 w-full" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {/* Access Control Management Table Here */}
-                        <p>ตารางจัดการสิทธิ์จะแสดงที่นี่</p>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>รหัสข้อสอบ</TableHead>
+                                    <TableHead>ชื่อข้อสอบ</TableHead>
+                                    <TableHead className="text-right">จัดการสิทธิ์</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {exams.map((exam) => (
+                                    <TableRow key={exam.id}>
+                                        <TableCell>{exam.id}</TableCell>
+                                        <TableCell>{exam.name}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Link href={`/admin/permissions/${exam.id}`}>
+                                                <Button variant="outline" size="sm">
+                                                    จัดการ <ArrowRight className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </Link>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                           </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
             </TabsContent>
