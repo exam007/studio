@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -12,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Clock, Eye, EyeOff, Loader2, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 type Quiz = {
     id: string;
@@ -146,22 +148,46 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                         <p className="text-lg mb-6">{currentQuestion.text}</p>
                         {currentQuestion.type === 'mcq' && (
                             <RadioGroup value={answers[currentQuestion.id] || ''} onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)} className="space-y-3">
-                                {currentQuestion.options?.map(option => (
-                                    <div key={option.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                        <RadioGroupItem value={option.id} id={option.id} />
-                                        <Label htmlFor={option.id} className="text-base flex-1 cursor-pointer">{option.text}</Label>
-                                    </div>
-                                ))}
+                                {currentQuestion.options?.map(option => {
+                                    const isSelected = answers[currentQuestion.id] === option.id;
+                                    return (
+                                        <div key={option.id} className="flex items-center">
+                                            <RadioGroupItem value={option.id} id={option.id} className="sr-only" />
+                                            <Label 
+                                                htmlFor={option.id} 
+                                                className={cn(
+                                                    "flex-1 cursor-pointer space-x-3 p-4 border rounded-lg transition-colors w-full",
+                                                    "hover:bg-primary/90 hover:text-primary-foreground",
+                                                    isSelected && "bg-primary text-primary-foreground"
+                                                )}
+                                            >
+                                                <span>{option.text}</span>
+                                            </Label>
+                                        </div>
+                                    )
+                                })}
                             </RadioGroup>
                         )}
                         {currentQuestion.type === 'tf' && (
                              <RadioGroup value={answers[currentQuestion.id] || ''} onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)} className="space-y-3">
-                                {currentQuestion.options?.map(option => (
-                                    <div key={option.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                        <RadioGroupItem value={option.text} id={option.id} />
-                                        <Label htmlFor={option.id} className="text-base flex-1 cursor-pointer">{option.text}</Label>
-                                    </div>
-                                ))}
+                                {currentQuestion.options?.map(option => {
+                                    const isSelected = answers[currentQuestion.id] === option.text;
+                                    return (
+                                        <div key={option.id} className="flex items-center">
+                                            <RadioGroupItem value={option.text} id={option.id} className="sr-only" />
+                                            <Label 
+                                                htmlFor={option.id} 
+                                                className={cn(
+                                                    "flex-1 cursor-pointer space-x-3 p-4 border rounded-lg transition-colors w-full",
+                                                    "hover:bg-primary/90 hover:text-primary-foreground",
+                                                    isSelected && "bg-primary text-primary-foreground"
+                                                )}
+                                            >
+                                                <span>{option.text}</span>
+                                            </Label>
+                                        </div>
+                                    )
+                                })}
                             </RadioGroup>
                         )}
                         {currentQuestion.type === 'short' && (
