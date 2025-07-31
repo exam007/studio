@@ -156,9 +156,9 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                                             <Label 
                                                 htmlFor={option.id} 
                                                 className={cn(
-                                                    "flex-1 cursor-pointer space-x-3 p-4 border rounded-lg transition-colors w-full",
-                                                    "hover:bg-primary/90 hover:text-primary-foreground",
-                                                    isSelected && "bg-primary text-primary-foreground"
+                                                    "flex-1 cursor-pointer space-x-3 p-4 border rounded-lg transition-all duration-200 ease-in-out w-full",
+                                                    "hover:bg-primary/90 hover:text-primary-foreground hover:scale-[1.02] active:scale-[1.02]",
+                                                    isSelected && "bg-primary text-primary-foreground scale-[1.02]"
                                                 )}
                                             >
                                                 <span>{option.text}</span>
@@ -178,9 +178,9 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                                             <Label 
                                                 htmlFor={option.id} 
                                                 className={cn(
-                                                    "flex-1 cursor-pointer space-x-3 p-4 border rounded-lg transition-colors w-full",
-                                                    "hover:bg-primary/90 hover:text-primary-foreground",
-                                                    isSelected && "bg-primary text-primary-foreground"
+                                                    "flex-1 cursor-pointer space-x-3 p-4 border rounded-lg transition-all duration-200 ease-in-out w-full",
+                                                    "hover:bg-primary/90 hover:text-primary-foreground hover:scale-[1.02] active:scale-[1.02]",
+                                                    isSelected && "bg-primary text-primary-foreground scale-[1.02]"
                                                 )}
                                             >
                                                 <span>{option.text}</span>
