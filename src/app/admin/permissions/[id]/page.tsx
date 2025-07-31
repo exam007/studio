@@ -25,6 +25,7 @@ const MOCK_USERS_WITH_PERMISSION = [
 export default function ManagePermissionsPage({ params }: { params: { id: string } }) {
   const [users, setUsers] = useState(MOCK_USERS_WITH_PERMISSION);
   const [newUserEmails, setNewUserEmails] = useState("");
+  const { id } = params;
 
   const handleAddPermission = () => {
     if (!newUserEmails.trim()) return;
@@ -61,7 +62,7 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
         </Link>
         <h1 className="text-3xl font-headline font-bold">จัดการสิทธิ์ข้อสอบ</h1>
         <p className="text-muted-foreground mt-1">
-          สำหรับข้อสอบ: <span className="font-semibold text-primary">{MOCK_EXAM_DETAILS.name} ({params.id})</span>
+          สำหรับข้อสอบ: <span className="font-semibold text-primary">{MOCK_EXAM_DETAILS.name} ({id})</span>
         </p>
       </div>
 
