@@ -78,23 +78,23 @@ export default function QuizResultsPage() {
                              <AccordionContent>
                                 <ul className="space-y-4 pt-4">
                                     {results.map((result, index) => (
-                                        <li key={result.questionId} className="p-4 border rounded-md">
-                                            <div className="flex justify-between items-start">
+                                        <li key={result.questionId} className="p-4 border rounded-md bg-card">
+                                            <div className="flex justify-between items-start gap-4">
                                                 <p className="font-semibold text-base mb-3 flex-1">
                                                     {index + 1}. {result.questionText}
                                                 </p>
                                                 {result.isCorrect ? (
-                                                    <Check className="w-6 h-6 text-accent ml-4" />
+                                                    <Check className="w-6 h-6 text-green-500 flex-shrink-0" />
                                                 ) : (
-                                                    <XCircle className="w-6 h-6 text-destructive ml-4" />
+                                                    <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
                                                 )}
                                             </div>
                                             <div className="space-y-2 text-sm">
-                                                <p className={`p-2 rounded-md ${result.isCorrect ? 'bg-accent/10 text-accent-foreground' : 'bg-destructive/10 text-destructive-foreground'}`}>
+                                                <p className={`p-2 rounded-md ${result.isCorrect ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
                                                     <span className="font-medium">Your Answer: </span>{result.userAnswer}
                                                 </p>
                                                 {!result.isCorrect && (
-                                                    <p className="p-2 rounded-md bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                                    <p className="p-2 rounded-md bg-green-100 dark:bg-green-900/30">
                                                         <span className="font-medium">Correct Answer: </span>{result.correctAnswer}
                                                     </p>
                                                 )}
