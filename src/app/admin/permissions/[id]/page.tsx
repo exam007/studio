@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, PlusCircle, Trash2, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 
 // Mock data
 const MOCK_EXAM_DETAILS = {
@@ -23,18 +24,25 @@ const MOCK_USERS_WITH_PERMISSION = [
 
 export default function ManagePermissionsPage({ params }: { params: { id: string } }) {
   const [users, setUsers] = useState(MOCK_USERS_WITH_PERMISSION);
-  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserEmails, setNewUserEmails] = useState("");
 
   const handleAddPermission = () => {
-    if (newUserEmail && !users.find(u => u.email === newUserEmail)) {
-      // In a real app, you'd validate the email and get user details
-      const newUser = {
-        id: `USR${String(users.length + 1).padStart(3, '0')}`,
-        email: newUserEmail,
+    if (!newUserEmails.trim()) return;
+
+    const emailsToAdd = newUserEmails
+        .split(',')
+        .map(email => email.trim())
+        .filter(email => email && !users.find(u => u.email === email));
+
+    if (emailsToAdd.length > 0) {
+      const newUsers = emailsToAdd.map((email, index) => ({
+        id: `USR${String(users.length + index + 1).padStart(3, '0')}`,
+        email: email,
         name: "New User (Invited)",
-      };
-      setUsers(prev => [...prev, newUser]);
-      setNewUserEmail("");
+      }));
+      
+      setUsers(prev => [...prev, ...newUsers]);
+      setNewUserEmails("");
     }
   };
 
@@ -60,18 +68,19 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
       <Card>
         <CardHeader>
           <CardTitle>เพิ่มสิทธิ์การเข้าถึง</CardTitle>
-          <CardDescription>กรอกอีเมลของผู้ใช้ที่ต้องการให้สิทธิ์ทำข้อสอบชุดนี้</CardDescription>
-          <div className="flex gap-2 pt-2">
+          <CardDescription>กรอกอีเมลของผู้ใช้ คั่นด้วยจุลภาค (,) เพื่อเพิ่มสิทธิ์ทีละหลายคน</CardDescription>
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <div className="relative flex-1">
               <ShieldCheck className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="user@gmail.com" 
+              <Textarea 
+                placeholder="user1@gmail.com, user2@gmail.com" 
                 className="pl-8 w-full" 
-                value={newUserEmail}
-                onChange={(e) => setNewUserEmail(e.target.value)}
+                value={newUserEmails}
+                onChange={(e) => setNewUserEmails(e.target.value)}
+                rows={2}
               />
             </div>
-            <Button onClick={handleAddPermission}>
+            <Button onClick={handleAddPermission} className="w-full sm:w-auto">
               <PlusCircle className="mr-2 h-4 w-4" /> เพิ่มสิทธิ์
             </Button>
           </div>
