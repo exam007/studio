@@ -23,9 +23,9 @@ const MOCK_USERS_WITH_PERMISSION = [
 ];
 
 export default function ManagePermissionsPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [users, setUsers] = useState(MOCK_USERS_WITH_PERMISSION);
   const [newUserEmails, setNewUserEmails] = useState("");
-  const { id } = params;
 
   const handleAddPermission = () => {
     if (!newUserEmails.trim()) return;
