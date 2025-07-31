@@ -9,10 +9,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload } from "lucide-react";
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import * as XLSX from 'xlsx';
+import { useToast } from "@/components/ui/use-toast";
+
+type Exam = {
+    id: string;
+    name: string;
+    questionCount: number;
+}
 
 export default function AdminDashboardPage() {
+  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [exams, setExams] = useState<Exam[]>([
+      { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15 },
+      { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25 },
+  ]);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -20,11 +33,45 @@ export default function AdminDashboardPage() {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // TODO: Handle the file upload process
-      console.log("Selected file:", file.name);
-      alert(`คุณเลือกไฟล์: ${file.name}`);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = e.target?.result;
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            
+            // Start reading from the second row (index 1)
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
+            
+            // For now, we'll log the data to the console to verify it.
+            // In the next step, we'll process this data to create a new exam.
+            console.log("Exam data from sheet:", jsonData);
+
+            toast({
+              title: "อัปโหลดไฟล์สำเร็จ",
+              description: `อ่านข้อมูลจากไฟล์ ${file.name} เรียบร้อยแล้ว`,
+            });
+            // Here you would process jsonData to create a new exam and add it to the state
+            // For example:
+            // const newExam = { ... };
+            // setExams(prev => [...prev, newExam]);
+
+        } catch (error) {
+            console.error("Error reading the file:", error);
+            toast({
+              title: "เกิดข้อผิดพลาด",
+              description: "ไม่สามารถอ่านข้อมูลจากไฟล์ได้ โปรดตรวจสอบฟอร์แมต",
+              variant: "destructive",
+            });
+        }
+    };
+    reader.readAsBinaryString(file);
+
+    // Reset file input to allow uploading the same file again
+    event.target.value = '';
   };
 
 
@@ -94,22 +141,16 @@ export default function AdminDashboardPage() {
                                </TableRow>
                            </TableHeader>
                            <TableBody>
-                                <TableRow>
-                                    <TableCell>EXM001</TableCell>
-                                    <TableCell>General Knowledge Challenge</TableCell>
-                                    <TableCell>15</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="outline" size="sm">แก้ไข</Button>
-                                    </TableCell>
-                                </TableRow>
-                               <TableRow>
-                                    <TableCell>EXM002</TableCell>
-                                    <TableCell>World History Deep Dive</TableCell>
-                                    <TableCell>25</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="outline" size="sm">แก้ไข</Button>
-                                    </TableCell>
-                                </TableRow>
+                                {exams.map((exam) => (
+                                    <TableRow key={exam.id}>
+                                        <TableCell>{exam.id}</TableCell>
+                                        <TableCell>{exam.name}</TableCell>
+                                        <TableCell>{exam.questionCount}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="outline" size="sm">แก้ไข</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
                            </TableBody>
                        </Table>
                     </CardContent>
