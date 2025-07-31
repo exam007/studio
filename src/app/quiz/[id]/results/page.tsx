@@ -15,35 +15,35 @@ const MOCK_RESULTS = {
   results: [
     {
       questionId: 'q1',
-      questionText: 'What is the capital of Japan?',
+      questionText: 'เมืองหลวงของประเทศญี่ปุ่นคืออะไร?',
       userAnswer: 'Tokyo',
       correctAnswer: 'Tokyo',
       isCorrect: true,
-      explanation: 'Tokyo is indeed the capital of Japan, known for its Imperial Palace and numerous shrines and temples.',
+      explanation: 'โตเกียวเป็นเมืองหลวงของญี่ปุ่น เป็นที่รู้จักจากพระราชวังอิมพีเรียลและศาลเจ้าและวัดมากมาย',
     },
     {
       questionId: 'q2',
-      questionText: 'The Great Wall of China is visible from the moon with the naked eye.',
+      questionText: 'กำแพงเมืองจีนสามารถมองเห็นได้จากดวงจันทร์ด้วยตาเปล่า',
       userAnswer: 'True',
       correctAnswer: 'False',
       isCorrect: false,
-      explanation: 'This is a common misconception. The Great Wall is not visible from space, and certainly not from the moon, without aid.',
+      explanation: 'นี่เป็นความเข้าใจผิดที่พบบ่อย กำแพงเมืองจีนไม่สามารถมองเห็นได้จากอวกาศ และแน่นอนว่าไม่สามารถมองเห็นได้จากดวงจันทร์หากไม่มีเครื่องช่วย',
     },
     {
       questionId: 'q3',
-      questionText: 'Which planet is known as the Red Planet?',
+      questionText: 'ดาวเคราะห์ดวงใดเป็นที่รู้จักในชื่อดาวเคราะห์สีแดง',
       userAnswer: 'Mars',
       correctAnswer: 'Mars',
       isCorrect: true,
-      explanation: 'Mars is called the Red Planet because of the reddish iron oxide prevalent on its surface.',
+      explanation: 'ดาวอังคารถูกเรียกว่าดาวเคราะห์สีแดงเนื่องจากมีเหล็กออกไซด์สีแดงที่แพร่หลายบนพื้นผิว',
     },
     {
       questionId: 'q4',
-      questionText: 'Who wrote the play "Romeo and Juliet"?',
+      questionText: 'ใครเป็นคนเขียนบทละครเรื่อง "โรมิโอและจูเลียต"?',
       userAnswer: 'Jane Austen',
       correctAnswer: 'William Shakespeare',
       isCorrect: false,
-      explanation: '"Romeo and Juliet" is a tragedy written by William Shakespeare early in his career.',
+      explanation: '"โรมิโอและจูเลียต" เป็นบทละครโศกนาฏกรรมที่เขียนโดยวิลเลียม เชกสเปียร์ ในช่วงต้นอาชีพของเขา',
     },
   ],
 };
@@ -60,14 +60,14 @@ export default function QuizResultsPage() {
                         <div className="flex justify-center mb-4">
                             <CheckCircle className="w-16 h-16 text-primary" />
                         </div>
-                        <CardTitle className="text-3xl font-headline">Quiz Complete!</CardTitle>
+                        <CardTitle className="text-3xl font-headline">ทำข้อสอบเสร็จสิ้น!</CardTitle>
                         <CardDescription className="pt-2 text-base">
-                            Here are your results.
+                            นี่คือผลลัพธ์ของคุณ
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="p-6 bg-muted/50 rounded-lg">
-                            <p className="text-lg text-muted-foreground">You Scored</p>
+                            <p className="text-lg text-muted-foreground">คุณได้คะแนน</p>
                             <p className="text-6xl font-bold text-primary">{score} / {totalQuestions}</p>
                         </div>
                         
@@ -76,7 +76,7 @@ export default function QuizResultsPage() {
                              <AccordionTrigger className="text-lg font-semibold">
                                 <div className="flex items-center gap-2">
                                     <HelpCircle className="w-5 h-5" />
-                                    <span>Review Your Answers</span>
+                                    <span>ตรวจสอบคำตอบของคุณ</span>
                                 </div>
                              </AccordionTrigger>
                              <AccordionContent>
@@ -95,18 +95,18 @@ export default function QuizResultsPage() {
                                             </div>
                                             <div className="space-y-2 text-sm">
                                                 <p className={`p-3 rounded-md border-l-4 ${result.isCorrect ? 'bg-green-100/50 border-green-500 text-green-900 dark:bg-green-900/20 dark:text-green-200' : 'bg-red-100/50 border-red-500 text-red-900 dark:bg-red-900/20 dark:text-red-200'}`}>
-                                                    <span className="font-medium">Your Answer: </span>{result.userAnswer}
+                                                    <span className="font-medium">คำตอบของคุณ: </span>{result.userAnswer}
                                                 </p>
                                                 {!result.isCorrect && (
                                                     <p className="p-3 rounded-md bg-green-100/50 border-l-4 border-green-500 text-green-900 dark:bg-green-900/20 dark:text-green-200">
-                                                        <span className="font-medium">Correct Answer: </span>{result.correctAnswer}
+                                                        <span className="font-medium">คำตอบที่ถูกต้อง: </span>{result.correctAnswer}
                                                     </p>
                                                 )}
                                                  <div className="mt-3 p-3 rounded-md bg-blue-100/50 border-l-4 border-blue-500 text-blue-900 dark:bg-blue-900/20 dark:text-blue-200">
                                                     <div className="flex items-start gap-2">
                                                         <Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-300"/>
                                                         <div>
-                                                           <h4 className="font-medium mb-1">Explanation</h4>
+                                                           <h4 className="font-medium mb-1">คำอธิบาย</h4>
                                                             <p className="text-sm">{result.explanation}</p>
                                                         </div>
                                                     </div>
@@ -124,7 +124,7 @@ export default function QuizResultsPage() {
                         <Link href="/dashboard" passHref className="w-full">
                             <Button className="w-full" size="lg">
                                 <Home className="mr-2 h-4 w-4" />
-                                Back to Dashboard
+                                กลับไปหน้าหลัก
                             </Button>
                         </Link>
                     </CardFooter>
