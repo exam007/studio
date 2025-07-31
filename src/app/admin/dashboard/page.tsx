@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
                                     <div className="space-y-2">
                                         <h4 className="font-medium leading-none">ตัวอย่างฟอร์แมตไฟล์ Sheet</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            ไฟล์ของคุณควรมีคอลัมน์ตามลำดับดังนี้: id, type, text, options, correctAnswer
+                                            คอลัมน์ควรเรียงลำดับดังนี้: A=ข้อ, B=คำถาม, C-F=ตัวเลือก, G=เฉลย, H=คำอธิบาย
                                         </p>
                                         <Image src="https://placehold.co/600x400.png" alt="Sheet format example" width={600} height={400} className="rounded-md border" data-ai-hint="spreadsheet table"/>
                                     </div>
