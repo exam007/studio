@@ -9,9 +9,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Eye, EyeOff, Loader2, Send } from "lucide-react";
+import { Clock, Eye, EyeOff, Loader2, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
 type Quiz = {
     id: string;
@@ -103,8 +103,8 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
     const handleSubmit = () => {
         setIsSubmitting(true);
         toast({
-            title: "Submitting Quiz...",
-            description: "Your answers are being sent for AI grading. Please wait.",
+            title: "กำลังส่งข้อสอบ...",
+            description: "ระบบกำลังส่งคำตอบของคุณเพื่อตรวจด้วย AI โปรดรอสักครู่",
         });
 
         setTimeout(() => {
@@ -116,68 +116,91 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
 
     return (
         <div className="w-full">
-            <div className="flex justify-end items-center mb-4 gap-2">
-                <div className="flex items-center space-x-2">
-                    {isTimerVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    <Label htmlFor="timer-visibility">Show Timer</Label>
-                    <Switch
-                        id="timer-visibility"
-                        checked={isTimerVisible}
-                        onCheckedChange={setIsTimerVisible}
-                    />
-                </div>
-            </div>
-            
-            <Timer initialTimeInSeconds={quiz.timeInMinutes * 60} onTimeUp={handleTimeUp} isVisible={isTimerVisible} />
-
-            <Card className="w-full shadow-xl">
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl">{`Question ${currentQuestionIndex + 1} of ${quiz.questions.length}`}</CardTitle>
-                    <Progress value={progress} className="mt-2" />
-                </CardHeader>
-                <CardContent className="py-6 min-h-[200px]">
-                    <p className="text-lg mb-6">{currentQuestion.text}</p>
-                    {currentQuestion.type === 'mcq' && (
-                        <RadioGroup value={answers[currentQuestion.id] || ''} onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)} className="space-y-3">
-                            {currentQuestion.options?.map(option => (
-                                <div key={option.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                    <RadioGroupItem value={option.id} id={option.id} />
-                                    <Label htmlFor={option.id} className="text-base flex-1 cursor-pointer">{option.text}</Label>
-                                </div>
-                            ))}
-                        </RadioGroup>
-                    )}
-                    {currentQuestion.type === 'tf' && (
-                         <RadioGroup value={answers[currentQuestion.id] || ''} onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)} className="space-y-3">
-                            {currentQuestion.options?.map(option => (
-                                <div key={option.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                    <RadioGroupItem value={option.text} id={option.id} />
-                                    <Label htmlFor={option.id} className="text-base flex-1 cursor-pointer">{option.text}</Label>
-                                </div>
-                            ))}
-                        </RadioGroup>
-                    )}
-                    {currentQuestion.type === 'short' && (
-                        <Textarea 
-                            placeholder="Type your answer here..."
-                            value={answers[currentQuestion.id] || ''}
-                            onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                            className="text-base h-32"
-                        />
-                    )}
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                    <Button variant="outline" onClick={handlePrev} disabled={currentQuestionIndex === 0}>Previous</Button>
-                    {currentQuestionIndex < quiz.questions.length - 1 ? (
-                        <Button onClick={handleNext}>Next</Button>
-                    ) : (
-                        <Button onClick={handleSubmit} disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                            Submit for AI Grading
+             <AlertDialog>
+                <div className="flex justify-between items-center mb-4 gap-2">
+                    <AlertDialogTrigger asChild>
+                         <Button variant="destructive" size="icon" className="h-8 w-8">
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Submit Quiz</span>
                         </Button>
-                    )}
-                </CardFooter>
-            </Card>
+                    </AlertDialogTrigger>
+                    <div className="flex items-center space-x-2">
+                        {isTimerVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        <Label htmlFor="timer-visibility">Show Timer</Label>
+                        <Switch
+                            id="timer-visibility"
+                            checked={isTimerVisible}
+                            onCheckedChange={setIsTimerVisible}
+                        />
+                    </div>
+                </div>
+                
+                <Timer initialTimeInSeconds={quiz.timeInMinutes * 60} onTimeUp={handleTimeUp} isVisible={isTimerVisible} />
+
+                <Card className="w-full shadow-xl">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl">{`Question ${currentQuestionIndex + 1} of ${quiz.questions.length}`}</CardTitle>
+                        <Progress value={progress} className="mt-2" />
+                    </CardHeader>
+                    <CardContent className="py-6 min-h-[200px]">
+                        <p className="text-lg mb-6">{currentQuestion.text}</p>
+                        {currentQuestion.type === 'mcq' && (
+                            <RadioGroup value={answers[currentQuestion.id] || ''} onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)} className="space-y-3">
+                                {currentQuestion.options?.map(option => (
+                                    <div key={option.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                        <RadioGroupItem value={option.id} id={option.id} />
+                                        <Label htmlFor={option.id} className="text-base flex-1 cursor-pointer">{option.text}</Label>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                        )}
+                        {currentQuestion.type === 'tf' && (
+                             <RadioGroup value={answers[currentQuestion.id] || ''} onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)} className="space-y-3">
+                                {currentQuestion.options?.map(option => (
+                                    <div key={option.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                        <RadioGroupItem value={option.text} id={option.id} />
+                                        <Label htmlFor={option.id} className="text-base flex-1 cursor-pointer">{option.text}</Label>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                        )}
+                        {currentQuestion.type === 'short' && (
+                            <Textarea 
+                                placeholder="Type your answer here..."
+                                value={answers[currentQuestion.id] || ''}
+                                onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                                className="text-base h-32"
+                            />
+                        )}
+                    </CardContent>
+                    <CardFooter className="flex justify-between">
+                        <Button variant="outline" onClick={handlePrev} disabled={currentQuestionIndex === 0}>Previous</Button>
+                        {currentQuestionIndex < quiz.questions.length - 1 ? (
+                            <Button onClick={handleNext}>Next</Button>
+                        ) : (
+                            <Button onClick={handleSubmit} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                Submit for AI Grading
+                            </Button>
+                        )}
+                    </CardFooter>
+                </Card>
+
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>ยืนยันการส่งข้อสอบ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        คุณกำลังจะส่งข้อสอบก่อนที่จะทำครบทุกข้อ คุณแน่ใจหรือไม่?
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSubmit} disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "ยืนยันการส่ง"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+             </AlertDialog>
 
             <AlertDialog open={showTimeUpDialog}>
                 <AlertDialogContent>
