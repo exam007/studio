@@ -2,29 +2,47 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, LogOut, BookOpen, User } from "lucide-react";
+import { LayoutDashboard, LogOut, FileUp, Shield, Users } from "lucide-react";
 import Link from 'next/link';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
     return (
         <SidebarProvider>
             <div className="flex min-h-screen bg-background">
                 <Sidebar>
                     <SidebarHeader>
                         <div className="flex items-center gap-2 p-2">
-                           <BookOpen className="w-8 h-8 text-primary"/>
-                           <h2 className="text-2xl font-headline font-semibold text-primary">แนวข้อสอบ</h2>
+                           <LayoutDashboard className="w-8 h-8 text-primary"/>
+                           <h2 className="text-2xl font-headline font-semibold text-primary">Admin</h2>
                         </div>
                     </SidebarHeader>
                     <SidebarContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <Link href="/dashboard" passHref>
+                                <Link href="/admin/dashboard" passHref>
                                     <SidebarMenuButton>
-                                        <Home />
-                                        หน้าหลัก
+                                        <LayoutDashboard />
+                                        Dashboard
                                     </SidebarMenuButton>
                                 </Link>
+                            </SidebarMenuItem>
+                             <SidebarMenuItem>
+                                <SidebarMenuButton>
+                                    <FileUp />
+                                    จัดการข้อสอบ
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                             <SidebarMenuItem>
+                                <SidebarMenuButton>
+                                    <Shield />
+                                    จัดการสิทธิ์
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                             <SidebarMenuItem>
+                                <SidebarMenuButton>
+                                    <Users />
+                                    จัดการผู้ใช้
+                                </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarContent>
@@ -45,10 +63,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <header className="flex items-center justify-between p-4 border-b bg-card">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
-                            <span className="font-medium text-sm hidden sm:inline">Welcome, User!</span>
+                            <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
                             <Avatar className="h-9 w-9">
-                                <AvatarImage src="https://placehold.co/40x40" alt="User avatar" data-ai-hint="user avatar" />
-                                <AvatarFallback>U</AvatarFallback>
+                                <AvatarImage src="https://placehold.co/40x40" alt="Admin avatar" data-ai-hint="admin avatar" />
+                                <AvatarFallback>A</AvatarFallback>
                             </Avatar>
                         </div>
                     </header>
@@ -60,3 +78,4 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarProvider>
     );
 }
+

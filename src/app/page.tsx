@@ -1,9 +1,26 @@
+
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  // Mock function to simulate login and role check
+  const handleLogin = (role: 'admin' | 'user') => {
+    // In a real app, you would handle Google Sign-In here
+    // and check the email domain.
+    if (role === 'admin') {
+      router.push('/admin/dashboard');
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
       <Card className="w-full max-w-sm shadow-2xl">
@@ -15,16 +32,13 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="px-6 pb-6">
             <div className="flex flex-col space-y-3">
-                <Link href="/dashboard" passHref>
-                    <Button className="w-full h-12 text-lg" variant="default">
-                    เข้าสู่ระบบด้วย Google
-                    </Button>
-                </Link>
-                <Link href="/dashboard" passHref>
-                    <Button className="w-full h-12 text-lg bg-[#00B900] hover:bg-[#00B900]/90 text-white">
-                    เข้าสู่ระบบด้วย Line
-                    </Button>
-                </Link>
+                {/* This would be a single Google Login button in the final version */}
+                <Button onClick={() => handleLogin('user')} className="w-full h-12 text-lg" variant="default">
+                  Login as User (@gmail.com)
+                </Button>
+                <Button onClick={() => handleLogin('admin')} className="w-full h-12 text-lg bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                  Login as Admin (@attorney285.co.th)
+                </Button>
             </div>
         </CardContent>
       </Card>
