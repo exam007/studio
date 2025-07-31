@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, Search, FileUp, Shield, Users } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload } from "lucide-react";
+import Image from "next/image";
 
 export default function AdminDashboardPage() {
   return (
@@ -29,12 +31,32 @@ export default function AdminDashboardPage() {
                     <CardHeader>
                         <CardTitle>รายการข้อสอบ</CardTitle>
                         <CardDescription>เพิ่ม, แก้ไข, หรือลบข้อสอบในระบบ</CardDescription>
-                         <div className="flex gap-2 pt-2">
+                         <div className="flex items-center gap-2 pt-2">
                             <div className="relative flex-1">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input placeholder="ค้นหาด้วยรหัสข้อสอบ..." className="pl-8 w-full" />
                             </div>
-                            <Button><PlusCircle className="mr-2" /> เพิ่มข้อสอบ</Button>
+                            
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" size="icon">
+                                        <HelpCircle className="h-4 w-4" />
+                                        <span className="sr-only">ดูตัวอย่างไฟล์</span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-96">
+                                    <div className="space-y-2">
+                                        <h4 className="font-medium leading-none">ตัวอย่างฟอร์แมตไฟล์ Sheet</h4>
+                                        <p className="text-sm text-muted-foreground">
+                                            ไฟล์ของคุณควรมีคอลัมน์ตามลำดับดังนี้: id, type, text, options, correctAnswer
+                                        </p>
+                                        <Image src="https://placehold.co/600x400.png" alt="Sheet format example" width={600} height={400} className="rounded-md border" data-ai-hint="spreadsheet table"/>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                            <Button>
+                                <Upload className="mr-2 h-4 w-4" /> อัปโหลดไฟล์
+                            </Button>
                         </div>
                     </CardHeader>
                     <CardContent>
