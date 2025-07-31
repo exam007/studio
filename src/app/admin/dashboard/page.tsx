@@ -9,8 +9,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload } from "lucide-react";
 import Image from "next/image";
+import { useRef } from "react";
 
 export default function AdminDashboardPage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // TODO: Handle the file upload process
+      console.log("Selected file:", file.name);
+      alert(`คุณเลือกไฟล์: ${file.name}`);
+    }
+  };
+
+
   return (
     <div className="animate-in fade-in-50">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -54,7 +71,14 @@ export default function AdminDashboardPage() {
                                     </div>
                                 </PopoverContent>
                             </Popover>
-                            <Button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                            />
+                            <Button onClick={handleUploadClick}>
                                 <Upload className="mr-2 h-4 w-4" /> อัปโหลดไฟล์
                             </Button>
                         </div>
