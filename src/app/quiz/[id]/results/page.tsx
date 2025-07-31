@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Home, XCircle, Check, HelpCircle } from "lucide-react";
+import { CheckCircle, Home, XCircle, Check, HelpCircle, Info } from "lucide-react";
 import Link from "next/link";
 
 // In a real app, this data would be fetched from your backend
@@ -19,6 +19,7 @@ const MOCK_RESULTS = {
       userAnswer: 'Tokyo',
       correctAnswer: 'Tokyo',
       isCorrect: true,
+      explanation: 'Tokyo is indeed the capital of Japan, known for its Imperial Palace and numerous shrines and temples.',
     },
     {
       questionId: 'q2',
@@ -26,6 +27,7 @@ const MOCK_RESULTS = {
       userAnswer: 'True',
       correctAnswer: 'False',
       isCorrect: false,
+      explanation: 'This is a common misconception. The Great Wall is not visible from space, and certainly not from the moon, without aid.',
     },
     {
       questionId: 'q3',
@@ -33,6 +35,7 @@ const MOCK_RESULTS = {
       userAnswer: 'Mars',
       correctAnswer: 'Mars',
       isCorrect: true,
+      explanation: 'Mars is called the Red Planet because of the reddish iron oxide prevalent on its surface.',
     },
     {
       questionId: 'q4',
@@ -40,6 +43,7 @@ const MOCK_RESULTS = {
       userAnswer: 'Jane Austen',
       correctAnswer: 'William Shakespeare',
       isCorrect: false,
+      explanation: '"Romeo and Juliet" is a tragedy written by William Shakespeare early in his career.',
     },
   ],
 };
@@ -90,14 +94,23 @@ export default function QuizResultsPage() {
                                                 )}
                                             </div>
                                             <div className="space-y-2 text-sm">
-                                                <p className={`p-2 rounded-md ${result.isCorrect ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                                                <p className={`p-3 rounded-md border-l-4 ${result.isCorrect ? 'bg-green-100/50 border-green-500 text-green-900 dark:bg-green-900/20 dark:text-green-200' : 'bg-red-100/50 border-red-500 text-red-900 dark:bg-red-900/20 dark:text-red-200'}`}>
                                                     <span className="font-medium">Your Answer: </span>{result.userAnswer}
                                                 </p>
                                                 {!result.isCorrect && (
-                                                    <p className="p-2 rounded-md bg-green-100 dark:bg-green-900/30">
+                                                    <p className="p-3 rounded-md bg-green-100/50 border-l-4 border-green-500 text-green-900 dark:bg-green-900/20 dark:text-green-200">
                                                         <span className="font-medium">Correct Answer: </span>{result.correctAnswer}
                                                     </p>
                                                 )}
+                                                 <div className="mt-3 p-3 rounded-md bg-blue-100/50 border-l-4 border-blue-500 text-blue-900 dark:bg-blue-900/20 dark:text-blue-200">
+                                                    <div className="flex items-start gap-2">
+                                                        <Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-300"/>
+                                                        <div>
+                                                           <h4 className="font-medium mb-1">Explanation</h4>
+                                                            <p className="text-sm">{result.explanation}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </li>
                                     ))}
