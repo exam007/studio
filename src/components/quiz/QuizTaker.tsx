@@ -206,7 +206,7 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                         ) : (
                             <Button onClick={handleSubmit} disabled={isSubmitting}>
                                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                                Submit for AI Grading
+                                ส่งข้อสอบ
                             </Button>
                         )}
                     </CardFooter>
