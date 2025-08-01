@@ -7,18 +7,52 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight } from "lucide-react";
+import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Exam = {
     id: string;
     name: string;
     questionCount: number;
 }
+
+type UserWithPermissions = {
+    id: string;
+    email: string;
+    name: string;
+    avatar: string;
+    accessibleExams: { id: string; name: string }[];
+}
+
+// Mock data
+const MOCK_USERS_DATA: UserWithPermissions[] = [
+    {
+        id: 'USR001',
+        email: 'user1@gmail.com',
+        name: 'John Doe',
+        avatar: 'https://placehold.co/40x40.png',
+        accessibleExams: [
+            { id: 'EXM001', name: 'General Knowledge Challenge' },
+            { id: 'EXM002', name: 'World History Deep Dive' },
+        ],
+    },
+    {
+        id: 'USR002',
+        email: 'user2@gmail.com',
+        name: 'Jane Smith',
+        avatar: 'https://placehold.co/40x40.png',
+        accessibleExams: [
+            { id: 'EXM001', name: 'General Knowledge Challenge' },
+        ],
+    },
+];
+
 
 export default function AdminDashboardPage() {
   const { toast } = useToast();
@@ -27,6 +61,17 @@ export default function AdminDashboardPage() {
       { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15 },
       { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25 },
   ]);
+
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [foundUser, setFoundUser] = useState<UserWithPermissions | null>(null);
+  const [searchAttempted, setSearchAttempted] = useState(false);
+
+  const handleUserSearch = () => {
+      if (!userSearchQuery.trim()) return;
+      const user = MOCK_USERS_DATA.find(u => u.email.toLowerCase() === userSearchQuery.toLowerCase().trim());
+      setFoundUser(user || null);
+      setSearchAttempted(true);
+  };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -200,14 +245,79 @@ export default function AdminDashboardPage() {
                     <CardHeader>
                         <CardTitle>จัดการผู้ใช้งาน</CardTitle>
                         <CardDescription>ดูข้อมูลและสิทธิ์การเข้าถึงของผู้ใช้ทั้งหมด</CardDescription>
-                         <div className="relative pt-2">
-                            <Search className="absolute left-2.5 top-4 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="ค้นหาด้วย User ID หรือ Email..." className="pl-8 w-full" />
+                         <div className="flex items-center gap-2 pt-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="ค้นหาด้วย Email..." 
+                                    className="pl-8 w-full" 
+                                    value={userSearchQuery}
+                                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleUserSearch()}
+                                />
+                            </div>
+                            <Button onClick={handleUserSearch}>ค้นหาผู้ใช้</Button>
                         </div>
                     </CardHeader>
                     <CardContent>
-                       {/* User Management Table Here */}
-                        <p>ตารางจัดการผู้ใช้จะแสดงที่นี่</p>
+                        {searchAttempted ? (
+                            foundUser ? (
+                                <Card className="mt-6 animate-in fade-in-50">
+                                    <CardHeader className="flex flex-row items-center gap-4">
+                                        <Avatar className="h-16 w-16 border-2 border-primary">
+                                            <AvatarImage src={foundUser.avatar} data-ai-hint="user avatar" />
+                                            <AvatarFallback>{foundUser.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <CardTitle>{foundUser.name}</CardTitle>
+                                            <CardDescription className="flex items-center gap-2 pt-1">
+                                                <Mail className="h-4 w-4" /> {foundUser.email}
+                                            </CardDescription>
+                                             <Badge variant="secondary" className="mt-2">{foundUser.id}</Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <h3 className="font-semibold mb-3 mt-4 text-base">
+                                            สิทธิ์การเข้าถึงข้อสอบ ({foundUser.accessibleExams.length} รายการ)
+                                        </h3>
+                                        {foundUser.accessibleExams.length > 0 ? (
+                                        <div className="border rounded-md">
+                                             <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>รหัสข้อสอบ</TableHead>
+                                                        <TableHead>ชื่อข้อสอบ</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {foundUser.accessibleExams.map(exam => (
+                                                        <TableRow key={exam.id}>
+                                                            <TableCell><Badge variant="outline">{exam.id}</Badge></TableCell>
+                                                            <TableCell>{exam.name}</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                        ) : (
+                                            <p className="text-muted-foreground text-center py-4">ผู้ใช้ยังไม่มีสิทธิ์เข้าถึงข้อสอบใดๆ</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <div className="text-center py-16 border-2 border-dashed rounded-lg mt-6">
+                                    <User className="mx-auto h-12 w-12 text-muted-foreground" />
+                                    <h3 className="mt-4 text-lg font-medium">ไม่พบผู้ใช้งาน</h3>
+                                    <p className="mt-1 text-sm text-muted-foreground">ไม่พบผู้ใช้ด้วยอีเมลที่คุณค้นหา</p>
+                                </div>
+                            )
+                        ) : (
+                            <div className="text-center py-16 border-2 border-dashed rounded-lg mt-6">
+                                <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <h3 className="mt-4 text-lg font-medium">ค้นหาผู้ใช้</h3>
+                                <p className="mt-1 text-sm text-muted-foreground">กรอกอีเมลของผู้ใช้เพื่อดูสิทธิ์การเข้าถึงข้อสอบ</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </TabsContent>
