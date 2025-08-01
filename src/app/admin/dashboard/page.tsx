@@ -137,7 +137,7 @@ export default function AdminDashboardPage() {
                 <TabsTrigger value="users"><Users className="mr-2"/>จัดการผู้ใช้</TabsTrigger>
             </TabsList>
             <TabsContent value="exams">
-                <Card>
+                <Card className="min-h-[500px]">
                     <CardHeader>
                         <CardTitle>รายการข้อสอบ</CardTitle>
                         <CardDescription>เพิ่ม, แก้ไข, หรือลบข้อสอบในระบบ</CardDescription>
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
                 </Card>
             </TabsContent>
             <TabsContent value="permissions">
-                 <Card>
+                 <Card className="min-h-[500px]">
                     <CardHeader>
                         <CardTitle>จัดการสิทธิ์ข้อสอบ</CardTitle>
                         <CardDescription>เลือกข้อสอบเพื่อจัดการสิทธิ์การเข้าถึงของผู้ใช้</CardDescription>
@@ -241,7 +241,7 @@ export default function AdminDashboardPage() {
                 </Card>
             </TabsContent>
             <TabsContent value="users">
-                <Card>
+                <Card className="min-h-[500px]">
                     <CardHeader>
                         <CardTitle>จัดการผู้ใช้งาน</CardTitle>
                         <CardDescription>ดูข้อมูลและสิทธิ์การเข้าถึงของผู้ใช้ทั้งหมด</CardDescription>
@@ -325,3 +325,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
