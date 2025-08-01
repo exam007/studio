@@ -22,11 +22,13 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
-      <Card className="w-full max-w-sm shadow-2xl">
+    <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
+      <Card className="w-full max-w-sm shadow-2xl backdrop-blur-sm bg-card/80">
         <CardHeader className="text-center">
             <div className="flex justify-center items-center mb-4">
-                <BookOpen className="w-12 h-12 text-primary" />
+                <div className="p-4 bg-primary/20 rounded-full">
+                    <BookOpen className="w-12 h-12 text-primary" />
+                </div>
             </div>
           <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
         </CardHeader>

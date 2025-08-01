@@ -8,21 +8,21 @@ import Link from 'next/link';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
         <SidebarProvider>
-            <div className="flex min-h-screen bg-background">
-                <Sidebar>
+            <div className="flex min-h-screen">
+                <Sidebar variant="inset" side="left">
                     <SidebarHeader>
-                        <div className="flex items-center gap-2 p-2">
-                           <BookOpen className="w-8 h-8 text-primary"/>
-                           <h2 className="text-2xl font-headline font-semibold text-primary">แนวข้อสอบ</h2>
+                        <div className="flex items-center gap-2 p-2 justify-center">
+                           <BookOpen className="w-8 h-8 text-sidebar-primary"/>
+                           <h2 className="text-2xl font-headline font-semibold text-sidebar-primary group-data-[collapsible=icon]:hidden">แนวข้อสอบ</h2>
                         </div>
                     </SidebarHeader>
                     <SidebarContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <Link href="/dashboard" passHref>
-                                    <SidebarMenuButton>
+                                    <SidebarMenuButton tooltip="หน้าหลัก" size="lg">
                                         <Home />
-                                        หน้าหลัก
+                                        <span>หน้าหลัก</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
@@ -32,9 +32,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <Link href="/" passHref>
-                                    <SidebarMenuButton>
+                                    <SidebarMenuButton tooltip="Logout" size="lg">
                                         <LogOut />
-                                        Logout
+                                        <span>Logout</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
@@ -42,7 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarFooter>
                 </Sidebar>
                 <SidebarInset>
-                    <header className="flex items-center justify-between p-4 border-b bg-card">
+                    <header className="flex items-center justify-between p-4 border-b">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
                             <span className="font-medium text-sm hidden sm:inline">Welcome, User!</span>
@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </Avatar>
                         </div>
                     </header>
-                    <main className="p-4 sm:p-6 lg:p-8 bg-background flex-1">
+                    <main className="p-4 sm:p-6 lg:p-8 flex-1">
                         {children}
                     </main>
                 </SidebarInset>
