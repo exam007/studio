@@ -37,7 +37,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (username === "Admin@aottorney" && password === "Admin285") {
+    if (username === "Admin@attorney" && password === "Admin285") {
       toast({
         title: "เข้าสู่ระบบสำเร็จ",
         description: "กำลังนำคุณไปยังหน้าแดชบอร์ดผู้ดูแลระบบ...",
