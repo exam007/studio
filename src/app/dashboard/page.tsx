@@ -1,25 +1,26 @@
 
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Clock, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-// Mock data for quizzes a user has access to
-const quizzes = [
-    { id: '1', title: 'General Knowledge Challenge', questions: 15, time: 20 },
-    { id: '2', title: 'World History Deep Dive', questions: 25, time: 25 },
+// Mock data for quizzes, representing all quizzes in the system for the admin view
+const allQuizzes = [
+    { id: 'EXM001', title: 'General Knowledge Challenge', questions: 15, time: 20 },
+    { id: 'EXM002', title: 'World History Deep Dive', questions: 25, time: 30 },
 ];
 
 export default function UserDashboardPage() {
     return (
         <div className="animate-in fade-in-50">
             <div className="mb-8">
-                <h1 className="text-3xl font-headline font-bold">ข้อสอบของคุณ</h1>
-                <p className="text-muted-foreground mt-1">เลือกข้อสอบที่คุณต้องการจะทำ</p>
+                <h1 className="text-3xl font-headline font-bold">ข้อสอบทั้งหมด</h1>
+                <p className="text-muted-foreground mt-1">เลือกข้อสอบที่คุณต้องการจะทำ (มุมมองผู้ใช้)</p>
             </div>
-            {quizzes.length > 0 ? (
+            {allQuizzes.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {quizzes.map(quiz => (
+                    {allQuizzes.map(quiz => (
                         <Card key={quiz.id} className="flex flex-col hover:shadow-lg transition-shadow duration-300">
                             <CardHeader>
                                 <CardTitle className="font-headline text-xl">{quiz.title}</CardTitle>
@@ -49,10 +50,9 @@ export default function UserDashboardPage() {
             ) : (
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
                     <h2 className="text-xl font-semibold">ไม่พบข้อสอบ</h2>
-                    <p className="text-muted-foreground mt-2">คุณยังไม่ได้รับสิทธิ์ให้ทำข้อสอบใดๆ</p>
+                    <p className="text-muted-foreground mt-2">ยังไม่มีข้อสอบในระบบ</p>
                 </div>
             )}
         </div>
     );
 }
-

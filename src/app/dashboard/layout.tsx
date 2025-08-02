@@ -2,7 +2,7 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, LogOut, BookOpen, User } from "lucide-react";
+import { Home, LogOut, BookOpen, User, LayoutDashboard } from "lucide-react";
 import Link from 'next/link';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +23,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     <SidebarMenuButton tooltip="หน้าหลัก" size="lg">
                                         <Home />
                                         <span>หน้าหลัก</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                             <SidebarMenuItem>
+                                <Link href="/admin/dashboard" passHref>
+                                    <SidebarMenuButton tooltip="กลับหน้า Admin" size="lg">
+                                        <LayoutDashboard />
+                                        <span>กลับหน้า Admin</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>

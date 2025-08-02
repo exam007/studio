@@ -3,7 +3,7 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutDashboard, LogOut, FileUp, Shield, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, FileUp, Shield, Users, Eye } from "lucide-react";
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 
@@ -57,6 +57,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
+                             <SidebarMenuItem>
+                                <Link href="/dashboard" passHref>
+                                    <SidebarMenuButton tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'}>
+                                        <Eye />
+                                        <span>มุมมองผู้ใช้</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarContent>
                     <SidebarFooter>
@@ -91,5 +99,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </SidebarProvider>
     );
 }
-
-    
