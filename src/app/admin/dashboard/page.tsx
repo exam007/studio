@@ -1,26 +1,30 @@
 
 "use client"
 
-export const dynamic = "force-dynamic";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import * as XLSX from 'xlsx';
+import { v4 as uuidv4 } from 'uuid';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, Loader2 } from "lucide-react";
-import Image from "next/image";
-import { useRef, useState, useEffect, Suspense } from "react";
-import * as XLSX from 'xlsx';
-import { useToast } from "@/components/ui/use-toast";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight,
+  User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, Loader2
+} from "lucide-react";
 
 
 type Exam = {
@@ -79,7 +83,6 @@ function DashboardContent() {
     ]);
   }, []);
 
-
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [foundUser, setFoundUser] = useState<UserWithPermissions | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
@@ -113,7 +116,6 @@ function DashboardContent() {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             
-            // Start reading from the second row (index 1)
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
             
             console.log("Exam data from sheet:", jsonData);
@@ -122,8 +124,6 @@ function DashboardContent() {
               title: "อัปโหลดไฟล์สำเร็จ",
               description: `อ่านข้อมูลจากไฟล์ ${file.name} เรียบร้อยแล้ว`,
             });
-            // Here you would process jsonData to create a new exam and add it to the state
-
         } catch (error) {
             console.error("Error reading the file:", error);
             toast({
@@ -134,7 +134,6 @@ function DashboardContent() {
         }
     };
     reader.readAsBinaryString(file);
-
     event.target.value = '';
   };
   
