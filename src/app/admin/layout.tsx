@@ -5,11 +5,21 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, S
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LayoutDashboard, LogOut, FileUp, Shield, Users } from "lucide-react";
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const isActive = (href: string) => pathname === href;
+    const searchParams = useSearchParams();
+    
+    const isActive = (path: string, tab?: string) => {
+        const currentTab = searchParams.get('tab');
+        if (path === '/admin/dashboard' && tab) {
+            // If a tab is specified, check if it's the active one.
+            // If no tab is in the URL, default to 'exams'.
+            return currentTab === tab || (tab === 'exams' && !currentTab);
+        }
+        return pathname === path && !tab;
+    };
 
     return (
         <SidebarProvider>
@@ -25,23 +35,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <Link href="/admin/dashboard" passHref>
-                                    <SidebarMenuButton tooltip="Dashboard" size="lg" isActive={isActive('/admin/dashboard')}>
-                                        <LayoutDashboard />
-                                        <span>Dashboard</span>
+                                    <SidebarMenuButton tooltip="Dashboard" size="lg" isActive={isActive('/admin/dashboard', 'exams')}>
+                                        <FileUp />
+                                        <span>จัดการข้อสอบ</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
                              <SidebarMenuItem>
-                                <Link href="/admin/dashboard?tab=exams" passHref>
-                                    <SidebarMenuButton tooltip="จัดการข้อสอบ" size="lg">
-                                        <FileUp />
-                                        <span>จัดการข้อสอบ</span>
-                                    </SidebarMenuButton>
-                                 </Link>
-                            </SidebarMenuItem>
-                             <SidebarMenuItem>
                                 <Link href="/admin/dashboard?tab=permissions" passHref>
-                                    <SidebarMenuButton tooltip="จัดการสิทธิ์" size="lg">
+                                    <SidebarMenuButton tooltip="จัดการสิทธิ์" size="lg" isActive={isActive('/admin/dashboard', 'permissions')}>
                                         <Shield />
                                         <span>จัดการสิทธิ์</span>
                                     </SidebarMenuButton>
@@ -49,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </SidebarMenuItem>
                              <SidebarMenuItem>
                                 <Link href="/admin/dashboard?tab=users" passHref>
-                                    <SidebarMenuButton tooltip="จัดการผู้ใช้" size="lg">
+                                    <SidebarMenuButton tooltip="จัดการผู้ใช้" size="lg" isActive={isActive('/admin/dashboard', 'users')}>
                                         <Users />
                                         <span>จัดการผู้ใช้</span>
                                     </SidebarMenuButton>
@@ -89,3 +91,5 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </SidebarProvider>
     );
 }
+
+    
