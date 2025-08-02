@@ -17,6 +17,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
+
 
 type Exam = {
     id: string;
@@ -58,6 +62,7 @@ const MOCK_USERS_DATA: UserWithPermissions[] = [
 
 export default function AdminDashboardPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [exams, setExams] = useState<Exam[]>([
       { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15 },
@@ -67,6 +72,12 @@ export default function AdminDashboardPage() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [foundUser, setFoundUser] = useState<UserWithPermissions | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
+
+  // State for editing exam name
+  const [examToEdit, setExamToEdit] = useState<Exam | null>(null);
+  const [newExamName, setNewExamName] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
 
   const handleUserSearch = () => {
       if (!userSearchQuery.trim()) return;
@@ -127,9 +138,35 @@ export default function AdminDashboardPage() {
     toast({
         title: "ลบข้อสอบสำเร็จ",
         description: `ข้อสอบรหัส ${examId} ถูกลบออกจากระบบแล้ว`,
-        variant: "destructive"
     })
   }
+
+  const handleOpenEditDialog = (exam: Exam) => {
+    setExamToEdit(exam);
+    setNewExamName(exam.name);
+    setIsEditDialogOpen(true);
+  }
+
+  const handleSaveExamName = () => {
+    if(!examToEdit || !newExamName.trim()) return;
+    
+    setExams(prev => prev.map(exam => 
+        exam.id === examToEdit.id ? { ...exam, name: newExamName.trim() } : exam
+    ));
+
+    toast({
+        title: "แก้ไขชื่อสำเร็จ",
+        description: `เปลี่ยนชื่อข้อสอบเป็น "${newExamName.trim()}" เรียบร้อยแล้ว`,
+    });
+    
+    setIsEditDialogOpen(false);
+    setExamToEdit(null);
+    setNewExamName("");
+  }
+  
+  const handleEditQuestions = (examId: string) => {
+      router.push(`/admin/edit-exam/${examId}`);
+  };
 
 
   return (
@@ -204,49 +241,51 @@ export default function AdminDashboardPage() {
                                         <TableCell>{exam.name}</TableCell>
                                         <TableCell>{exam.questionCount}</TableCell>
                                         <TableCell className="text-right">
-                                            <AlertDialog>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <span className="sr-only">Open menu</span>
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>ตัวเลือก</DropdownMenuLabel>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem>
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            แก้ไขชื่อ
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem>
-                                                            <FilePenLine className="mr-2 h-4 w-4" />
-                                                            แก้ไขคำถาม
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
+                                           
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>ตัวเลือก</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onClick={() => handleOpenEditDialog(exam)}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        แก้ไขชื่อ
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleEditQuestions(exam.id)}>
+                                                        <FilePenLine className="mr-2 h-4 w-4" />
+                                                        แก้ไขคำถาม
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
-                                                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={(e) => e.preventDefault()}>
                                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                                 ลบข้อสอบ
                                                             </DropdownMenuItem>
                                                         </AlertDialogTrigger>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                    <AlertDialogTitle>คุณแน่ใจหรือไม่?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        การกระทำนี้ไม่สามารถย้อนกลับได้ การลบข้อสอบจะลบข้อมูลทั้งหมดที่เกี่ยวข้องอย่างถาวร
-                                                    </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                    <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteExam(exam.id)} className="bg-destructive hover:bg-destructive/90">
-                                                        ยืนยันการลบ
-                                                    </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                            <AlertDialogTitle>คุณแน่ใจหรือไม่?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                การกระทำนี้ไม่สามารถย้อนกลับได้ การลบข้อสอบจะลบข้อมูลทั้งหมดที่เกี่ยวข้องอย่างถาวร
+                                                            </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteExam(exam.id)} className="bg-destructive hover:bg-destructive/90">
+                                                                ยืนยันการลบ
+                                                            </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -375,10 +414,40 @@ export default function AdminDashboardPage() {
                 </Card>
             </TabsContent>
         </Tabs>
+        
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                <DialogTitle>แก้ไขชื่อข้อสอบ</DialogTitle>
+                <DialogDescription>
+                    เปลี่ยนชื่อข้อสอบสำหรับรหัส {examToEdit?.id}. กดบันทึกเพื่อยืนยัน
+                </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                    ชื่อใหม่
+                    </Label>
+                    <Input
+                        id="name"
+                        value={newExamName}
+                        onChange={(e) => setNewExamName(e.target.value)}
+                        className="col-span-3"
+                    />
+                </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                            ยกเลิก
+                        </Button>
+                    </DialogClose>
+                    <Button type="submit" onClick={handleSaveExamName}>บันทึก</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }
-
-    
 
     
