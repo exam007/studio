@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail } from "lucide-react";
+import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import * as XLSX from 'xlsx';
@@ -15,6 +15,8 @@ import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 type Exam = {
     id: string;
@@ -119,6 +121,15 @@ export default function AdminDashboardPage() {
     // Reset file input to allow uploading the same file again
     event.target.value = '';
   };
+  
+  const handleDeleteExam = (examId: string) => {
+    setExams(prev => prev.filter(exam => exam.id !== examId));
+    toast({
+        title: "ลบข้อสอบสำเร็จ",
+        description: `ข้อสอบรหัส ${examId} ถูกลบออกจากระบบแล้ว`,
+        variant: "destructive"
+    })
+  }
 
 
   return (
@@ -193,7 +204,49 @@ export default function AdminDashboardPage() {
                                         <TableCell>{exam.name}</TableCell>
                                         <TableCell>{exam.questionCount}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="outline" size="sm">แก้ไข</Button>
+                                            <AlertDialog>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                            <span className="sr-only">Open menu</span>
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>ตัวเลือก</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            แก้ไขชื่อ
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem>
+                                                            <FilePenLine className="mr-2 h-4 w-4" />
+                                                            แก้ไขคำถาม
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <AlertDialogTrigger asChild>
+                                                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                ลบข้อสอบ
+                                                            </DropdownMenuItem>
+                                                        </AlertDialogTrigger>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>คุณแน่ใจหรือไม่?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        การกระทำนี้ไม่สามารถย้อนกลับได้ การลบข้อสอบจะลบข้อมูลทั้งหมดที่เกี่ยวข้องอย่างถาวร
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteExam(exam.id)} className="bg-destructive hover:bg-destructive/90">
+                                                        ยืนยันการลบ
+                                                    </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -325,5 +378,7 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
 
     
