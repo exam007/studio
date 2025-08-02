@@ -1,11 +1,16 @@
 
+
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LayoutDashboard, LogOut, FileUp, Shield, Users } from "lucide-react";
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+    const isActive = (href: string) => pathname === href;
+
     return (
         <SidebarProvider>
             <div className="flex min-h-screen">
@@ -20,29 +25,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <Link href="/admin/dashboard" passHref>
-                                    <SidebarMenuButton tooltip="Dashboard" size="lg">
+                                    <SidebarMenuButton tooltip="Dashboard" size="lg" isActive={isActive('/admin/dashboard')}>
                                         <LayoutDashboard />
                                         <span>Dashboard</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
                              <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="จัดการข้อสอบ" size="lg">
-                                    <FileUp />
-                                    <span>จัดการข้อสอบ</span>
-                                </SidebarMenuButton>
+                                <Link href="/admin/dashboard?tab=exams" passHref>
+                                    <SidebarMenuButton tooltip="จัดการข้อสอบ" size="lg">
+                                        <FileUp />
+                                        <span>จัดการข้อสอบ</span>
+                                    </SidebarMenuButton>
+                                 </Link>
                             </SidebarMenuItem>
                              <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="จัดการสิทธิ์" size="lg">
-                                    <Shield />
-                                    <span>จัดการสิทธิ์</span>
-                                </SidebarMenuButton>
+                                <Link href="/admin/dashboard?tab=permissions" passHref>
+                                    <SidebarMenuButton tooltip="จัดการสิทธิ์" size="lg">
+                                        <Shield />
+                                        <span>จัดการสิทธิ์</span>
+                                    </SidebarMenuButton>
+                                </Link>
                             </SidebarMenuItem>
                              <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="จัดการผู้ใช้" size="lg">
-                                    <Users />
-                                    <span>จัดการผู้ใช้</span>
-                                </SidebarMenuButton>
+                                <Link href="/admin/dashboard?tab=users" passHref>
+                                    <SidebarMenuButton tooltip="จัดการผู้ใช้" size="lg">
+                                        <Users />
+                                        <span>จัดการผู้ใช้</span>
+                                    </SidebarMenuButton>
+                                </Link>
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarContent>
@@ -78,4 +89,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </SidebarProvider>
     );
 }
-

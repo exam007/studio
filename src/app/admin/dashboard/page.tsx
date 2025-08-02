@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
@@ -20,7 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 type Exam = {
@@ -64,7 +64,10 @@ const MOCK_USERS_DATA: UserWithPermissions[] = [
 export default function AdminDashboardPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('exams');
+
   const [exams, setExams] = useState<Exam[]>([
       { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15 },
       { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25 },
@@ -79,6 +82,14 @@ export default function AdminDashboardPage() {
   const [newExamName, setNewExamName] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'exams' || tab === 'permissions' || tab === 'users') {
+        setActiveTab(tab);
+    } else {
+        setActiveTab('exams');
+    }
+  }, [searchParams]);
 
   const handleUserSearch = () => {
       if (!userSearchQuery.trim()) return;
@@ -179,14 +190,7 @@ export default function AdminDashboardPage() {
             </div>
         </div>
 
-        <Tabs defaultValue="exams">
-            <div className="flex justify-center mb-4">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="exams"><FileUp className="mr-2"/>จัดการข้อสอบ</TabsTrigger>
-                    <TabsTrigger value="permissions"><Shield className="mr-2"/>จัดการสิทธิ์</TabsTrigger>
-                    <TabsTrigger value="users"><Users className="mr-2"/>จัดการผู้ใช้</TabsTrigger>
-                </TabsList>
-            </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsContent value="exams">
                 <Card>
                     <CardHeader>
@@ -452,5 +456,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
