@@ -190,7 +190,7 @@ export default function AdminDashboardPage() {
             </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsContent value="exams">
                 <Card>
                     <CardHeader>
