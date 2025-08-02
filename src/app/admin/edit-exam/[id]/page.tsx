@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { v4 as uuidv4 } from 'uuid';
-// We'll need a QuestionEditor component
-// import { QuestionEditor } from "@/components/quiz/QuestionEditor";
+import { QuestionEditor } from "@/components/quiz/QuestionEditor";
 
 // Mock data - In a real app, this would be fetched based on params.id
 const MOCK_EXAM_DATA = {
@@ -127,7 +126,7 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
                 <CardDescription>จัดการคำถาม ตัวเลือก และคำตอบที่ถูกต้อง</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                {/* {questions.map((q, index) => (
+                 {questions.map((q, index) => (
                     <QuestionEditor 
                         key={q.id}
                         index={index}
@@ -135,10 +134,8 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
                         updateQuestion={updateQuestion}
                         removeQuestion={removeQuestion}
                     />
-                ))} */}
-                <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">ส่วนสำหรับแก้ไขคำถามจะถูกพัฒนาในขั้นตอนถัดไป</p>
-                </div>
+                ))}
+                
                 <Button variant="outline" onClick={addQuestion}>
                     <PlusCircle className="mr-2 h-4 w-4"/> เพิ่มคำถามใหม่
                 </Button>
@@ -153,5 +150,3 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
-
-    

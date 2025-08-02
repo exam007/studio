@@ -1,6 +1,6 @@
 "use client";
 
-import type { Question, Option } from '@/app/dashboard/create-quiz/page';
+import type { Question, Option } from '@/app/admin/edit-exam/[id]/page';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, X } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid';
 
 interface QuestionEditorProps {
     question: Question;
@@ -22,7 +23,7 @@ export function QuestionEditor({ question, index, updateQuestion, removeQuestion
     const handleTypeChange = (type: 'mcq' | 'short' | 'tf') => {
         const baseUpdate: Partial<Question> = { type, options: [], correctAnswer: '' };
         if (type === 'mcq') {
-            baseUpdate.options = [{ id: crypto.randomUUID(), text: '' }, { id: crypto.randomUUID(), text: '' }];
+            baseUpdate.options = [{ id: uuidv4(), text: '' }, { id: uuidv4(), text: '' }];
         }
         if (type === 'tf') {
             baseUpdate.options = [
@@ -40,7 +41,7 @@ export function QuestionEditor({ question, index, updateQuestion, removeQuestion
     };
 
     const addOption = () => {
-        const newOptions = [...question.options, { id: crypto.randomUUID(), text: '' }];
+        const newOptions = [...question.options, { id: uuidv4(), text: '' }];
         updateQuestion(question.id, { options: newOptions });
     };
 
