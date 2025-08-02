@@ -70,10 +70,8 @@ function DashboardContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [exams, setExams] = useState<Exam[]>([]);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
     // In a real app, you would fetch this data from Firestore
     setExams([
         { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15, timeInMinutes: 20 },
@@ -186,10 +184,6 @@ function DashboardContent() {
   const handleEditQuestions = (examId: string) => {
       router.push(`/admin/edit-exam/${examId}`);
   };
-  
-  if (!isClient) {
-      return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
 
   return (
     <div className="animate-in fade-in-50">
