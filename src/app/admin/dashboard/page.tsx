@@ -184,7 +184,7 @@ function DashboardComponent({ currentTab }: { currentTab: string }) {
 
   return (
     <>
-        <Tabs value={currentTab} onValueChange={(value) => router.push(`/admin/dashboard?tab=${value}`)}>
+        <Tabs value={currentTab} onValueChange={(value) => router.push(`/admin/dashboard?tab=${value}`)} className="w-full">
             <TabsContent value="exams">
                 <Card>
                     <CardHeader>
@@ -465,7 +465,7 @@ function DashboardComponent({ currentTab }: { currentTab: string }) {
   );
 }
 
-export default function AdminDashboardPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+const AdminDashboardPage = ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
     const tab = typeof searchParams.tab === 'string' ? searchParams.tab : 'exams';
     const validTabs = ['exams', 'permissions', 'users'];
     const currentTab = validTabs.includes(tab) ? tab : 'exams';
@@ -483,6 +483,8 @@ export default function AdminDashboardPage({ searchParams }: { searchParams: { [
             </Suspense>
         </div>
     );
-}
+};
+
+export default AdminDashboardPage;
 
     
