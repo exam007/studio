@@ -180,7 +180,7 @@ export default function AdminDashboardPage() {
 
         <Tabs defaultValue="exams">
             <div className="flex justify-center mb-4">
-                <TabsList className="grid grid-cols-3">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="exams"><FileUp className="mr-2"/>จัดการข้อสอบ</TabsTrigger>
                     <TabsTrigger value="permissions"><Shield className="mr-2"/>จัดการสิทธิ์</TabsTrigger>
                     <TabsTrigger value="users"><Users className="mr-2"/>จัดการผู้ใช้</TabsTrigger>
