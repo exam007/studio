@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -19,7 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 type Exam = {
@@ -66,10 +66,18 @@ function DashboardComponent({ currentTab }: { currentTab: string }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [exams, setExams] = useState<Exam[]>([
-      { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15, timeInMinutes: 20 },
-      { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25, timeInMinutes: 30 },
-  ]);
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    // In a real app, you would fetch this data from Firestore
+    setExams([
+        { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15, timeInMinutes: 20 },
+        { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25, timeInMinutes: 30 },
+    ]);
+  }, []);
+
 
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [foundUser, setFoundUser] = useState<UserWithPermissions | null>(null);
@@ -107,8 +115,6 @@ function DashboardComponent({ currentTab }: { currentTab: string }) {
             // Start reading from the second row (index 1)
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
             
-            // For now, we'll log the data to the console to verify it.
-            // In the next step, we'll process this data to create a new exam.
             console.log("Exam data from sheet:", jsonData);
 
             toast({
@@ -116,9 +122,6 @@ function DashboardComponent({ currentTab }: { currentTab: string }) {
               description: `อ่านข้อมูลจากไฟล์ ${file.name} เรียบร้อยแล้ว`,
             });
             // Here you would process jsonData to create a new exam and add it to the state
-            // For example:
-            // const newExam = { ... };
-            // setExams(prev => [...prev, newExam]);
 
         } catch (error) {
             console.error("Error reading the file:", error);
@@ -131,7 +134,6 @@ function DashboardComponent({ currentTab }: { currentTab: string }) {
     };
     reader.readAsBinaryString(file);
 
-    // Reset file input to allow uploading the same file again
     event.target.value = '';
   };
   
@@ -181,6 +183,10 @@ function DashboardComponent({ currentTab }: { currentTab: string }) {
   const handleEditQuestions = (examId: string) => {
       router.push(`/admin/edit-exam/${examId}`);
   };
+  
+  if (!isClient) {
+      return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
 
   return (
     <>
@@ -465,11 +471,18 @@ function DashboardComponent({ currentTab }: { currentTab: string }) {
   );
 }
 
-const AdminDashboardPage = ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
-    const tab = typeof searchParams.tab === 'string' ? searchParams.tab : 'exams';
+
+function DashboardPage() {
+    const searchParams = useSearchParams();
+    const tab = searchParams.get('tab') || 'exams';
     const validTabs = ['exams', 'permissions', 'users'];
     const currentTab = validTabs.includes(tab) ? tab : 'exams';
+    
+    return <DashboardComponent currentTab={currentTab} />;
+}
 
+
+export default function AdminDashboardPage() {
     return (
         <div className="animate-in fade-in-50">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -477,14 +490,21 @@ const AdminDashboardPage = ({ searchParams }: { searchParams: { [key: string]: s
                     <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
                     <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
                 </div>
+                 <TabsList className="grid w-full max-w-sm grid-cols-3">
+                    <TabsTrigger value="exams">
+                        <FileUp className="mr-2 h-4 w-4"/> จัดการข้อสอบ
+                    </TabsTrigger>
+                    <TabsTrigger value="permissions">
+                        <Shield className="mr-2 h-4 w-4"/> จัดการสิทธิ์
+                    </TabsTrigger>
+                    <TabsTrigger value="users">
+                        <Users className="mr-2 h-4 w-4"/> จัดการผู้ใช้
+                    </TabsTrigger>
+                </TabsList>
             </div>
-            <Suspense fallback={<div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-                <DashboardComponent currentTab={currentTab} />
+             <Suspense fallback={<div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+                <DashboardPage />
             </Suspense>
         </div>
     );
 };
-
-export default AdminDashboardPage;
-
-    
