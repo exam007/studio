@@ -179,13 +179,15 @@ export default function AdminDashboardPage() {
         </div>
 
         <Tabs defaultValue="exams">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
-                <TabsTrigger value="exams"><FileUp className="mr-2"/>จัดการข้อสอบ</TabsTrigger>
-                <TabsTrigger value="permissions"><Shield className="mr-2"/>จัดการสิทธิ์</TabsTrigger>
-                <TabsTrigger value="users"><Users className="mr-2"/>จัดการผู้ใช้</TabsTrigger>
-            </TabsList>
+            <div className="flex justify-center mb-4">
+                <TabsList className="grid grid-cols-3">
+                    <TabsTrigger value="exams"><FileUp className="mr-2"/>จัดการข้อสอบ</TabsTrigger>
+                    <TabsTrigger value="permissions"><Shield className="mr-2"/>จัดการสิทธิ์</TabsTrigger>
+                    <TabsTrigger value="users"><Users className="mr-2"/>จัดการผู้ใช้</TabsTrigger>
+                </TabsList>
+            </div>
             <TabsContent value="exams">
-                <Card className="min-h-[500px]">
+                <Card>
                     <CardHeader>
                         <CardTitle>รายการข้อสอบ</CardTitle>
                         <CardDescription>เพิ่ม, แก้ไข, หรือลบข้อสอบในระบบ</CardDescription>
@@ -295,7 +297,7 @@ export default function AdminDashboardPage() {
                 </Card>
             </TabsContent>
             <TabsContent value="permissions">
-                 <Card className="min-h-[500px]">
+                 <Card>
                     <CardHeader>
                         <CardTitle>จัดการสิทธิ์ข้อสอบ</CardTitle>
                         <CardDescription>เลือกข้อสอบเพื่อจัดการสิทธิ์การเข้าถึงของผู้ใช้</CardDescription>
@@ -333,7 +335,7 @@ export default function AdminDashboardPage() {
                 </Card>
             </TabsContent>
             <TabsContent value="users">
-                <Card className="min-h-[500px]">
+                <Card>
                     <CardHeader>
                         <CardTitle>จัดการผู้ใช้งาน</CardTitle>
                         <CardDescription>ดูข้อมูลและสิทธิ์การเข้าถึงของผู้ใช้ทั้งหมด</CardDescription>
