@@ -64,7 +64,7 @@ export default function LoginPage() {
                     <Input
                         id="username"
                         type="text"
-                        placeholder="Admin@aottorney"
+                        placeholder="ชื่อผู้ใช้"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
@@ -91,3 +91,4 @@ export default function LoginPage() {
     </main>
   );
 }
+
