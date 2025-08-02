@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { Button } from "@/components/ui/button";
@@ -8,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine } from "lucide-react";
+import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
@@ -62,7 +61,7 @@ const MOCK_USERS_DATA: UserWithPermissions[] = [
 ];
 
 
-export default function AdminDashboardPage() {
+function DashboardComponent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -194,16 +193,8 @@ export default function AdminDashboardPage() {
       router.push(`/admin/edit-exam/${examId}`);
   };
 
-
   return (
-    <div className="animate-in fade-in-50">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <div>
-                <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
-                <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
-            </div>
-        </div>
-
+    <>
         <Tabs value={activeTab} onValueChange={(value) => router.push(`/admin/dashboard?tab=${value}`)} className="w-full">
             <TabsContent value="exams">
                 <Card>
@@ -481,8 +472,24 @@ export default function AdminDashboardPage() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    </div>
+    </>
   );
+}
+
+export default function AdminDashboardPage() {
+    return (
+        <div className="animate-in fade-in-50">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
+                    <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
+                </div>
+            </div>
+            <Suspense fallback={<div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+                <DashboardComponent />
+            </Suspense>
+        </div>
+    );
 }
 
     
