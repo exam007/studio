@@ -45,7 +45,7 @@ export default function LoginPage() {
                     <BookOpen className="w-12 h-12 text-primary" />
                 </div>
             </div>
-          <CardTitle className="text-4xl font-headline font-bold text-primary">Admin Login</CardTitle>
+          <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
           <CardDescription>เข้าสู่ระบบเพื่อจัดการข้อสอบ</CardDescription>
         </CardHeader>
         <CardContent className="px-6 pb-6">
@@ -91,4 +91,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
