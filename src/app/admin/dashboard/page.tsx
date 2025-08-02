@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -19,7 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 
 type Exam = {
@@ -61,13 +61,11 @@ const MOCK_USERS_DATA: UserWithPermissions[] = [
 ];
 
 
-function DashboardComponent() {
+function DashboardComponent({ currentTab }: { currentTab: string }) {
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState('exams');
-
+  
   const [exams, setExams] = useState<Exam[]>([
       { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15, timeInMinutes: 20 },
       { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25, timeInMinutes: 30 },
@@ -82,15 +80,6 @@ function DashboardComponent() {
   const [newExamName, setNewExamName] = useState("");
   const [newExamTime, setNewExamTime] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'exams' || tab === 'permissions' || tab === 'users') {
-        setActiveTab(tab);
-    } else {
-        setActiveTab('exams');
-    }
-  }, [searchParams]);
 
   const handleUserSearch = () => {
       if (!userSearchQuery.trim()) return;
@@ -195,7 +184,7 @@ function DashboardComponent() {
 
   return (
     <>
-        <Tabs value={activeTab} onValueChange={(value) => router.push(`/admin/dashboard?tab=${value}`)} className="w-full">
+        <Tabs value={currentTab} onValueChange={(value) => router.push(`/admin/dashboard?tab=${value}`)}>
             <TabsContent value="exams">
                 <Card>
                     <CardHeader>
@@ -476,7 +465,11 @@ function DashboardComponent() {
   );
 }
 
-export default function AdminDashboardPage() {
+export default function AdminDashboardPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+    const tab = typeof searchParams.tab === 'string' ? searchParams.tab : 'exams';
+    const validTabs = ['exams', 'permissions', 'users'];
+    const currentTab = validTabs.includes(tab) ? tab : 'exams';
+
     return (
         <div className="animate-in fade-in-50">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -486,7 +479,7 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
             <Suspense fallback={<div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-                <DashboardComponent />
+                <DashboardComponent currentTab={currentTab} />
             </Suspense>
         </div>
     );
