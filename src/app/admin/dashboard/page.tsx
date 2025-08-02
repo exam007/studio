@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PlusCircle, Search, FileUp, Shield, Users, HelpCircle, Upload, ArrowRight, User, BookOpen, Mail, MoreHorizontal, Edit, Trash2, FilePenLine } from "lucide-react";
 import Image from "next/image";
@@ -27,6 +27,7 @@ type Exam = {
     id: string;
     name: string;
     questionCount: number;
+    timeInMinutes: number;
 }
 
 type UserWithPermissions = {
@@ -69,17 +70,18 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('exams');
 
   const [exams, setExams] = useState<Exam[]>([
-      { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15 },
-      { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25 },
+      { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15, timeInMinutes: 20 },
+      { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25, timeInMinutes: 30 },
   ]);
 
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [foundUser, setFoundUser] = useState<UserWithPermissions | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
 
-  // State for editing exam name
+  // State for editing exam
   const [examToEdit, setExamToEdit] = useState<Exam | null>(null);
   const [newExamName, setNewExamName] = useState("");
+  const [newExamTime, setNewExamTime] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -156,24 +158,36 @@ export default function AdminDashboardPage() {
   const handleOpenEditDialog = (exam: Exam) => {
     setExamToEdit(exam);
     setNewExamName(exam.name);
+    setNewExamTime(String(exam.timeInMinutes));
     setIsEditDialogOpen(true);
   }
 
-  const handleSaveExamName = () => {
+  const handleSaveExamChanges = () => {
     if(!examToEdit || !newExamName.trim()) return;
+
+    const time = parseInt(newExamTime, 10);
+    if(isNaN(time) || time <= 0) {
+        toast({
+            title: "เวลาไม่ถูกต้อง",
+            description: "กรุณาใส่เวลาเป็นตัวเลขที่มากกว่า 0",
+            variant: "destructive"
+        })
+        return;
+    }
     
     setExams(prev => prev.map(exam => 
-        exam.id === examToEdit.id ? { ...exam, name: newExamName.trim() } : exam
+        exam.id === examToEdit.id ? { ...exam, name: newExamName.trim(), timeInMinutes: time } : exam
     ));
 
     toast({
-        title: "แก้ไขชื่อสำเร็จ",
-        description: `เปลี่ยนชื่อข้อสอบเป็น "${newExamName.trim()}" เรียบร้อยแล้ว`,
+        title: "แก้ไขสำเร็จ",
+        description: `อัปเดตข้อมูลข้อสอบ "${newExamName.trim()}" เรียบร้อยแล้ว`,
     });
     
     setIsEditDialogOpen(false);
     setExamToEdit(null);
     setNewExamName("");
+    setNewExamTime("");
   }
   
   const handleEditQuestions = (examId: string) => {
@@ -190,7 +204,7 @@ export default function AdminDashboardPage() {
             </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => router.push(`/admin/dashboard?tab=${value}`)} className="w-full">
             <TabsContent value="exams">
                 <Card>
                     <CardHeader>
@@ -238,6 +252,7 @@ export default function AdminDashboardPage() {
                                    <TableHead>รหัสข้อสอบ</TableHead>
                                    <TableHead>ชื่อข้อสอบ</TableHead>
                                    <TableHead>จำนวนคำถาม</TableHead>
+                                   <TableHead>เวลา (นาที)</TableHead>
                                    <TableHead className="text-right">จัดการ</TableHead>
                                </TableRow>
                            </TableHeader>
@@ -247,6 +262,7 @@ export default function AdminDashboardPage() {
                                         <TableCell>{exam.id}</TableCell>
                                         <TableCell>{exam.name}</TableCell>
                                         <TableCell>{exam.questionCount}</TableCell>
+                                        <TableCell>{exam.timeInMinutes}</TableCell>
                                         <TableCell className="text-right">
                                            
                                             <DropdownMenu>
@@ -261,7 +277,7 @@ export default function AdminDashboardPage() {
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem onClick={() => handleOpenEditDialog(exam)}>
                                                         <Edit className="mr-2 h-4 w-4" />
-                                                        แก้ไขชื่อ
+                                                        แก้ไข
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => handleEditQuestions(exam.id)}>
                                                         <FilePenLine className="mr-2 h-4 w-4" />
@@ -425,20 +441,32 @@ export default function AdminDashboardPage() {
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                <DialogTitle>แก้ไขชื่อข้อสอบ</DialogTitle>
+                <DialogTitle>แก้ไขข้อมูลข้อสอบ</DialogTitle>
                 <DialogDescription>
-                    เปลี่ยนชื่อข้อสอบสำหรับรหัส {examToEdit?.id}. กดบันทึกเพื่อยืนยัน
+                    เปลี่ยนชื่อและเวลาในการทำข้อสอบสำหรับรหัส {examToEdit?.id}. กดบันทึกเพื่อยืนยัน
                 </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
-                    ชื่อใหม่
+                    ชื่อข้อสอบ
                     </Label>
                     <Input
                         id="name"
                         value={newExamName}
                         onChange={(e) => setNewExamName(e.target.value)}
+                        className="col-span-3"
+                    />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                     <Label htmlFor="time" className="text-right">
+                        เวลา (นาที)
+                    </Label>
+                    <Input
+                        id="time"
+                        type="number"
+                        value={newExamTime}
+                        onChange={(e) => setNewExamTime(e.target.value)}
                         className="col-span-3"
                     />
                 </div>
@@ -449,7 +477,7 @@ export default function AdminDashboardPage() {
                             ยกเลิก
                         </Button>
                     </DialogClose>
-                    <Button type="submit" onClick={handleSaveExamName}>บันทึก</Button>
+                    <Button type="submit" onClick={handleSaveExamChanges}>บันทึก</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
