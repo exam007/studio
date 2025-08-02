@@ -30,6 +30,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
 
   const handleAdminLogin = (e: React.FormEvent) => {
@@ -88,50 +89,56 @@ export default function LoginPage() {
                     เข้าสู่ระบบด้วย Google
                 </Button>
                 
-                <div className="flex items-center space-x-2 my-4">
+                <div className="flex items-center space-x-2 my-2">
                     <Separator className="flex-1"/>
                     <span className="text-xs text-muted-foreground">หรือ</span>
                     <Separator className="flex-1"/>
                 </div>
 
-                <form onSubmit={handleAdminLogin} className="flex flex-col space-y-4">
-                    <p className="text-center text-sm text-muted-foreground -mt-2">สำหรับผู้ดูแลระบบ</p>
-                    {error && (
-                        <Alert variant="destructive">
-                        <Terminal className="h-4 w-4" />
-                        <AlertTitle>Login Failed</AlertTitle>
-                        <AlertDescription>
-                            {error}
-                        </AlertDescription>
-                        </Alert>
-                    )}
-                    <div className="space-y-2">
-                        <Label htmlFor="username">ชื่อผู้ใช้</Label>
-                        <Input
-                            id="username"
-                            type="text"
-                            placeholder="ชื่อผู้ใช้"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="password">รหัสผ่าน</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <Button type="submit" className="w-full h-11 text-lg" variant="default">
-                        <LogIn className="mr-2 h-5 w-5" />
-                        เข้าสู่ระบบ
+                {showAdminLogin ? (
+                    <form onSubmit={handleAdminLogin} className="flex flex-col space-y-4 animate-in fade-in-50">
+                        <p className="text-center text-sm text-muted-foreground -mt-2">สำหรับผู้ดูแลระบบ</p>
+                        {error && (
+                            <Alert variant="destructive">
+                            <Terminal className="h-4 w-4" />
+                            <AlertTitle>Login Failed</AlertTitle>
+                            <AlertDescription>
+                                {error}
+                            </AlertDescription>
+                            </Alert>
+                        )}
+                        <div className="space-y-2">
+                            <Label htmlFor="username">ชื่อผู้ใช้</Label>
+                            <Input
+                                id="username"
+                                type="text"
+                                placeholder="ชื่อผู้ใช้"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">รหัสผ่าน</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <Button type="submit" className="w-full h-11 text-lg" variant="default">
+                            <LogIn className="mr-2 h-5 w-5" />
+                            เข้าสู่ระบบ
+                        </Button>
+                    </form>
+                ) : (
+                    <Button variant="ghost" onClick={() => setShowAdminLogin(true)} className="w-full">
+                       สำหรับผู้ดูแลระบบ
                     </Button>
-                </form>
+                )}
             </div>
         </CardContent>
       </Card>
