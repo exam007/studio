@@ -15,14 +15,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import {
   FileUp, Shield, Users, HelpCircle, Upload, ArrowRight,
-  User, Mail, MoreHorizontal, Edit, Trash2, FilePenLine
+  User, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle
 } from "lucide-react";
 
 
@@ -91,6 +91,11 @@ export function DashboardContent() {
   const [newExamName, setNewExamName] = useState("");
   const [newExamTime, setNewExamTime] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // State for adding a new user
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
 
   const handleUserSearch = () => {
       if (!userSearchQuery.trim()) return;
@@ -182,6 +187,28 @@ export function DashboardContent() {
   const handleEditQuestions = (examId: string) => {
       router.push(`/admin/edit-exam/${examId}`);
   };
+
+  const handleAddNewUser = () => {
+    if (!newUserName.trim() || !newUserEmail.trim()) {
+      toast({
+        title: "ข้อมูลไม่ครบถ้วน",
+        description: "กรุณากรอกชื่อและอีเมลให้ครบถ้วน",
+        variant: "destructive"
+      });
+      return;
+    }
+    // Here you would typically call a backend service to create the user.
+    // For now, we'll just show a success message.
+    console.log("Adding new user:", { name: newUserName, email: newUserEmail });
+    toast({
+      title: "เพิ่มสมาชิกสำเร็จ",
+      description: `เพิ่มคุณ ${newUserName} (${newUserEmail}) เข้าระบบแล้ว`,
+    });
+    // Reset form and close dialog
+    setNewUserName("");
+    setNewUserEmail("");
+    setIsAddUserDialogOpen(false);
+  }
 
   return (
     <div className="animate-in fade-in-50">
@@ -350,11 +377,22 @@ export function DashboardContent() {
           </Card>
         </TabsContent>
         <TabsContent value="users">
+        <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
           <Card>
             <CardHeader>
-              <CardTitle>จัดการผู้ใช้งาน</CardTitle>
-              <CardDescription>ดูข้อมูลและสิทธิ์การเข้าถึงของผู้ใช้ทั้งหมด</CardDescription>
-              <div className="flex items-center gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <CardTitle>จัดการผู้ใช้งาน</CardTitle>
+                        <CardDescription>ดูข้อมูล, ค้นหา, และเพิ่มผู้ใช้ใหม่ในระบบ</CardDescription>
+                    </div>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            เพิ่มสมาชิกใหม่
+                        </Button>
+                    </DialogTrigger>
+                </div>
+              <div className="flex items-center gap-2 pt-4">
                 <div className="relative flex-1">
                   <Input 
                     placeholder="ค้นหาด้วย Email..." 
@@ -428,6 +466,46 @@ export function DashboardContent() {
               )}
             </CardContent>
           </Card>
+           <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                <DialogTitle>เพิ่มสมาชิกใหม่</DialogTitle>
+                <DialogDescription>
+                    กรอกข้อมูลเพื่อสร้างบัญชีผู้ใช้ใหม่ในระบบ
+                </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="new-user-name" className="text-right">
+                        ชื่อ-สกุล
+                        </Label>
+                        <Input
+                        id="new-user-name"
+                        value={newUserName}
+                        onChange={(e) => setNewUserName(e.target.value)}
+                        className="col-span-3"
+                        placeholder="John Doe"
+                        />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="new-user-email" className="text-right">
+                        อีเมล
+                        </Label>
+                        <Input
+                        id="new-user-email"
+                        type="email"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        className="col-span-3"
+                        placeholder="user@example.com"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>ยกเลิก</Button>
+                    <Button type="submit" onClick={handleAddNewUser}>บันทึก</Button>
+                </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
       </Tabs>
       
@@ -477,3 +555,5 @@ export function DashboardContent() {
     </div>
   );
 }
+
+    
