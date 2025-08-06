@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Home, XCircle, Check, HelpCircle, Info } from "lucide-react";
+import { CheckCircle, Home, XCircle, Check, HelpCircle, Info, Clock } from "lucide-react";
 import Link from "next/link";
 
 // In a real app, this data would be fetched from your backend
@@ -12,6 +12,8 @@ import Link from "next/link";
 const MOCK_RESULTS = {
   score: 2,
   totalQuestions: 4,
+  timeTakenInSeconds: 930, // 15 minutes 30 seconds
+  totalTimeInMinutes: 20,
   results: [
     {
       questionId: 'q1',
@@ -48,9 +50,14 @@ const MOCK_RESULTS = {
   ],
 };
 
+const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
 
 export default function QuizResultsPage() {
-    const { score, totalQuestions, results } = MOCK_RESULTS;
+    const { score, totalQuestions, results, timeTakenInSeconds, totalTimeInMinutes } = MOCK_RESULTS;
 
     return (
         <div className="flex flex-col items-center min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -66,9 +73,18 @@ export default function QuizResultsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="p-6 bg-muted/50 rounded-lg">
-                            <p className="text-lg text-muted-foreground">คุณได้คะแนน</p>
-                            <p className="text-6xl font-bold text-primary">{score} / {totalQuestions}</p>
+                        <div className="p-6 bg-muted/50 rounded-lg flex flex-col sm:flex-row justify-around items-center gap-4">
+                            <div className="text-center">
+                                <p className="text-lg text-muted-foreground">คะแนน</p>
+                                <p className="text-6xl font-bold text-primary">{score} / {totalQuestions}</p>
+                            </div>
+                             <div className="h-20 w-px bg-border hidden sm:block"></div>
+                             <div className="w-full h-px bg-border sm:hidden"></div>
+                             <div className="text-center">
+                                <p className="text-lg text-muted-foreground flex items-center justify-center gap-2"><Clock className="w-5 h-5"/> เวลาที่ใช้</p>
+                                <p className="text-4xl font-bold text-primary">{formatTime(timeTakenInSeconds)}</p>
+                                <p className="text-sm text-muted-foreground">จากทั้งหมด {totalTimeInMinutes} นาที</p>
+                            </div>
                         </div>
                         
                         <Accordion type="single" collapsible className="w-full text-left">
