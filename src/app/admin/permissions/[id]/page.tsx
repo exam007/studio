@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,21 +11,46 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 
-// Mock data
-const MOCK_EXAM_DETAILS = {
-  id: 'EXM001',
-  name: 'General Knowledge Challenge',
-};
+type User = {
+  id: string;
+  email: string;
+  name: string;
+}
 
-const MOCK_USERS_WITH_PERMISSION = [
-  { id: 'USR001', email: 'user1@gmail.com', name: 'John Doe' },
-  { id: 'USR002', email: 'user2@gmail.com', name: 'Jane Smith' },
-];
+type ExamDetails = {
+    id: string;
+    name: string;
+}
 
 export default function ManagePermissionsPage({ params }: { params: { id: string } }) {
-  const id = params.id;
-  const [users, setUsers] = useState(MOCK_USERS_WITH_PERMISSION);
+  const { id } = params;
+  const [examDetails, setExamDetails] = useState<ExamDetails | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [newUserEmails, setNewUserEmails] = useState("");
+
+  useEffect(() => {
+    // In a real app, you'd fetch this data. We use localStorage for this prototype.
+    const storedExam = localStorage.getItem(`exam_details_${id}`);
+    if (storedExam) {
+        setExamDetails(JSON.parse(storedExam));
+    }
+    
+    const storedUsers: User[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("user_")) {
+            const user = JSON.parse(localStorage.getItem(key)!);
+            storedUsers.push(user);
+        }
+    }
+    
+    const storedPermissions = localStorage.getItem(`permissions_${id}`);
+    if(storedPermissions) {
+        const userIdsWithPermission: string[] = JSON.parse(storedPermissions);
+        setUsers(storedUsers.filter(u => userIdsWithPermission.includes(u.id)));
+    }
+
+  }, [id]);
 
   const handleAddPermission = () => {
     if (!newUserEmails.trim()) return;
@@ -33,28 +58,38 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
     const emailsToAdd = newUserEmails
         .split(',')
         .map(email => email.trim())
-        .filter(email => email && !users.find(u => u.email === email));
+        .filter(Boolean);
 
-    if (emailsToAdd.length > 0) {
-      const newUsers = emailsToAdd.map((email, index) => ({
-        id: `USR${String(users.length + index + 1).padStart(3, '0')}`,
-        email: email,
-        name: "New User (Invited)",
-      }));
-      
+    // In a real app, you'd find users by email from your database
+    // For this prototype, we'll assume the emails are valid and create mock users
+    const newUsers = emailsToAdd.map((email, index) => ({
+      id: `USR_NEW_${Date.now()}_${index}`,
+      email: email,
+      name: "Invited User",
+    }));
+
+    if (newUsers.length > 0) {
       setUsers(prev => [...prev, ...newUsers]);
+      // Here you'd also save the new permissions
+      const updatedUserIds = [...users.map(u => u.id), ...newUsers.map(u => u.id)];
+      localStorage.setItem(`permissions_${id}`, JSON.stringify(updatedUserIds));
       setNewUserEmails("");
     }
   };
 
   const handleRemovePermission = (userId: string) => {
-    setUsers(prev => prev.filter(u => u.id !== userId));
+    setUsers(prev => {
+        const newUsers = prev.filter(u => u.id !== userId);
+        const newUserIds = newUsers.map(u => u.id);
+        localStorage.setItem(`permissions_${id}`, JSON.stringify(newUserIds));
+        return newUsers;
+    });
   };
 
   return (
     <div className="animate-in fade-in-50">
       <div className="mb-6">
-        <Link href="/admin/dashboard">
+        <Link href="/admin/dashboard?tab=permissions">
             <Button variant="outline" size="sm" className="mb-4">
                 <ArrowLeft className="mr-2 h-4 w-4"/>
                 กลับไปหน้าหลัก
@@ -62,7 +97,7 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
         </Link>
         <h1 className="text-3xl font-headline font-bold">จัดการสิทธิ์ข้อสอบ</h1>
         <p className="text-muted-foreground mt-1">
-          สำหรับข้อสอบ: <span className="font-semibold text-primary">{MOCK_EXAM_DETAILS.name} ({id})</span>
+          สำหรับข้อสอบ: <span className="font-semibold text-primary">{examDetails?.name} ({id})</span>
         </p>
       </div>
 
@@ -118,11 +153,13 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
                     </TableCell>
                   </TableRow>
                 ))}
+                 {users.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center">ยังไม่มีผู้ใช้คนใดได้รับสิทธิ์สำหรับข้อสอบนี้</TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
-            {users.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">ยังไม่มีผู้ใช้คนใดได้รับสิทธิ์สำหรับข้อสอบนี้</p>
-            )}
           </div>
         </CardContent>
       </Card>

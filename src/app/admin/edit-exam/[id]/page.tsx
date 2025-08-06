@@ -1,44 +1,14 @@
 
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ArrowLeft, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { v4 as uuidv4 } from 'uuid';
 import { QuestionEditor } from "@/components/quiz/QuestionEditor";
-
-// Mock data - In a real app, this would be fetched based on params.id
-const MOCK_EXAM_DATA = {
-  id: 'EXM001',
-  name: 'General Knowledge Challenge',
-  questions: [
-    {
-      id: 'q1',
-      type: 'mcq',
-      text: 'What is the capital of Japan?',
-      options: [
-        { id: 'q1o1', text: 'Beijing' },
-        { id: 'q1o2', text: 'Seoul' },
-        { id: 'q1o3', text: 'Tokyo' },
-        { id: 'q1o4', text: 'Bangkok' },
-      ],
-      correctAnswer: 'q1o3'
-    },
-    {
-      id: 'q2',
-      type: 'tf',
-      text: 'The Great Wall of China is visible from the moon.',
-      options: [
-        { id: 'true', text: 'True' },
-        { id: 'false', text: 'False' },
-      ],
-      correctAnswer: 'false'
-    },
-  ]
-};
+import { useToast } from "@/components/ui/use-toast";
 
 export type Option = {
     id: string;
@@ -55,8 +25,27 @@ export type Question = {
 
 export default function EditExamPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const [examName, setExamName] = useState(MOCK_EXAM_DATA.name);
-  const [questions, setQuestions] = useState<Question[]>(MOCK_EXAM_DATA.questions);
+  const { toast } = useToast();
+  const [examName, setExamName] = useState("");
+  const [questions, setQuestions] = useState<Question[]>([]);
+
+  useEffect(() => {
+    // Load exam details and questions from localStorage
+    const storedExamDetails = localStorage.getItem(`exam_details_${id}`);
+    const storedQuestions = localStorage.getItem(`exam_questions_${id}`);
+    
+    if (storedExamDetails) {
+        const examDetails = JSON.parse(storedExamDetails);
+        setExamName(examDetails.name);
+    } else {
+        setExamName(`ข้อสอบ ${id}`);
+    }
+
+    if (storedQuestions) {
+        setQuestions(JSON.parse(storedQuestions));
+    }
+  }, [id]);
+
 
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -81,9 +70,29 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
   };
 
   const handleSaveChanges = () => {
-    // Here you would send the updated exam data (examName, questions) to your backend
-    console.log("Saving changes for exam:", { id, name: examName, questions });
-    alert("Changes saved to console!");
+    // In a real app, this would be an API call. Here, we use localStorage.
+    try {
+        const examDetails = { 
+            id, 
+            name: examName, 
+            questionCount: questions.length,
+            timeInMinutes: 20 // You might want a field for this
+        };
+        localStorage.setItem(`exam_details_${id}`, JSON.stringify(examDetails));
+        localStorage.setItem(`exam_questions_${id}`, JSON.stringify(questions));
+
+        toast({
+            title: "บันทึกสำเร็จ",
+            description: `ข้อสอบ "${examName}" ได้รับการบันทึกเรียบร้อยแล้ว`,
+        });
+    } catch (error) {
+        console.error("Failed to save to localStorage", error);
+        toast({
+            title: "เกิดข้อผิดพลาด",
+            description: "ไม่สามารถบันทึกการเปลี่ยนแปลงได้",
+            variant: "destructive"
+        });
+    }
   };
 
   return (
@@ -97,29 +106,11 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
             </Link>
             <h1 className="text-3xl font-headline font-bold">แก้ไขข้อสอบ</h1>
             <p className="text-muted-foreground mt-1">
-            คุณกำลังแก้ไขข้อสอบ: <span className="font-semibold text-primary">{MOCK_EXAM_DATA.name} ({id})</span>
+            คุณกำลังแก้ไขข้อสอบ: <span className="font-semibold text-primary">{examName} ({id})</span>
             </p>
       </div>
 
       <div className="space-y-8">
-        {/*
-        <Card>
-            <CardHeader>
-                <CardTitle>รายละเอียดข้อสอบ</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <Label htmlFor="exam-name">ชื่อข้อสอบ</Label>
-                    <Input 
-                        id="exam-name" 
-                        value={examName} 
-                        onChange={(e) => setExamName(e.target.value)} 
-                    />
-                </div>
-            </CardContent>
-        </Card>
-        */}
-
         <Card>
             <CardHeader>
                 <CardTitle>คำถามทั้งหมด</CardTitle>
@@ -143,7 +134,9 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
         </Card>
         
         <div className="flex justify-end gap-2">
-            <Button variant="outline">ยกเลิก</Button>
+            <Link href="/admin/dashboard">
+                <Button variant="outline">ยกเลิก</Button>
+            </Link>
             <Button onClick={handleSaveChanges}>บันทึกการเปลี่ยนแปลง</Button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import * as XLSX from 'xlsx';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,19 +21,19 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  FileUp, Shield, Users, HelpCircle, Upload, ArrowRight,
+  FileUp, Users, HelpCircle, Upload, ArrowRight,
   User, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle
 } from "lucide-react";
 
 
-type Exam = {
+export type Exam = {
     id: string;
     name: string;
     questionCount: number;
     timeInMinutes: number;
 }
 
-type UserWithPermissions = {
+export type UserWithPermissions = {
     id: string;
     email: string;
     name: string;
@@ -40,64 +41,46 @@ type UserWithPermissions = {
     accessibleExams: { id: string; name: string }[];
 }
 
-// Mock data
-const MOCK_USERS_DATA: UserWithPermissions[] = [
-    {
-        id: 'USR001',
-        email: 'user1@gmail.com',
-        name: 'John Doe',
-        avatar: 'https://placehold.co/40x40.png',
-        accessibleExams: [
-            { id: 'EXM001', name: 'General Knowledge Challenge' },
-            { id: 'EXM002', name: 'World History Deep Dive' },
-        ],
-    },
-    {
-        id: 'USR002',
-        email: 'user2@gmail.com',
-        name: 'Jane Smith',
-        avatar: 'https://placehold.co/40x40.png',
-        accessibleExams: [
-            { id: 'EXM001', name: 'General Knowledge Challenge' },
-        ],
-    },
-];
-
-const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, handleDeleteExam, fileInputRef, handleFileChange, handleUploadClick }: any) => (
+const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, handleDeleteExam, fileInputRef, handleFileChange, handleUploadClick, handleCreateNewExam }: any) => (
     <Card>
         <CardHeader>
           <CardTitle>รายการข้อสอบ</CardTitle>
           <CardDescription>เพิ่ม, แก้ไข, หรือลบข้อสอบในระบบ</CardDescription>
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 pt-2">
             <Input placeholder="ค้นหาด้วยรหัสข้อสอบ..." className="w-full" />
             
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <HelpCircle className="h-4 w-4" />
-                  <span className="sr-only">ดูตัวอย่างไฟล์</span>
+            <div className="flex items-center gap-2">
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon" className="flex-shrink-0">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="sr-only">ดูตัวอย่างไฟล์</span>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-96">
+                        <div className="space-y-2">
+                        <h4 className="font-medium leading-none">ตัวอย่างฟอร์แมตไฟล์ Sheet</h4>
+                        <p className="text-sm text-muted-foreground">
+                            คอลัมน์ควรเรียงลำดับดังนี้: A=ข้อ, B=คำถาม, C-F=ตัวเลือก, G=เฉลย, H=คำอธิบาย
+                        </p>
+                        <Image src="https://placehold.co/600x400.png" alt="Sheet format example" width={600} height={400} className="rounded-md border" data-ai-hint="spreadsheet table"/>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+                <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                />
+                <Button onClick={handleUploadClick} variant="outline" className="w-full">
+                <Upload className="mr-2 h-4 w-4" /> อัปโหลดไฟล์
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-96">
-                <div className="space-y-2">
-                  <h4 className="font-medium leading-none">ตัวอย่างฟอร์แมตไฟล์ Sheet</h4>
-                  <p className="text-sm text-muted-foreground">
-                    คอลัมน์ควรเรียงลำดับดังนี้: A=ข้อ, B=คำถาม, C-F=ตัวเลือก, G=เฉลย, H=คำอธิบาย
-                  </p>
-                  <Image src="https://placehold.co/600x400.png" alt="Sheet format example" width={600} height={400} className="rounded-md border" data-ai-hint="spreadsheet table"/>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-            />
-            <Button onClick={handleUploadClick}>
-              <Upload className="mr-2 h-4 w-4" /> อัปโหลดไฟล์
-            </Button>
+                <Button onClick={handleCreateNewExam} className="w-full">
+                  <PlusCircle className="mr-2 h-4 w-4" /> สร้างข้อสอบใหม่
+                </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -112,7 +95,7 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
               </TableRow>
             </TableHeader>
             <TableBody>
-              {exams.map((exam: Exam) => (
+              {exams.length > 0 ? exams.map((exam: Exam) => (
                 <TableRow key={exam.id}>
                   <TableCell>{exam.id}</TableCell>
                   <TableCell>{exam.name}</TableCell>
@@ -129,7 +112,6 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>ตัวเลือก</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleOpenEditDialog(exam)}>
                           <Edit className="mr-2 h-4 w-4" />
                           แก้ไข
@@ -166,52 +148,54 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
                   
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-);
-
-const PermissionsTabContent = ({ exams }: { exams: Exam[] }) => (
-    <Card>
-        <CardHeader>
-          <CardTitle>จัดการสิทธิ์ข้อสอบ</CardTitle>
-          <CardDescription>เลือกข้อสอบเพื่อจัดการสิทธิ์การเข้าถึงของผู้ใช้</CardDescription>
-          <div className="relative pt-2">
-            <Input placeholder="ค้นหาด้วยชื่อหรือรหัสข้อสอบ..." className="w-full" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>รหัสข้อสอบ</TableHead>
-                <TableHead>ชื่อข้อสอบ</TableHead>
-                <TableHead className="text-right">จัดการสิทธิ์</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {exams.map((exam) => (
-                <TableRow key={exam.id}>
-                  <TableCell>{exam.id}</TableCell>
-                  <TableCell>{exam.name}</TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/admin/permissions/${exam.id}`}>
-                      <Button variant="outline" size="sm">
-                        จัดการ <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </TableCell>
+              )) : (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                        ยังไม่มีข้อสอบในระบบ
+                    </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 );
 
-const UsersTabContent = ({ isAddUserDialogOpen, setIsAddUserDialogOpen, userSearchQuery, setUserSearchQuery, handleUserSearch, searchAttempted, foundUser, handleAddNewUser, newUserName, setNewUserName, newUserEmail, setNewUserEmail }: any) => (
+const UsersTabContent = ({ users, setUsers, isAddUserDialogOpen, setIsAddUserDialogOpen, userSearchQuery, setUserSearchQuery, handleUserSearch, searchAttempted, foundUser, newUserName, setNewUserName, newUserEmail, setNewUserEmail }: any) => {
+    
+    const { toast } = useToast();
+
+    const handleAddNewUser = () => {
+        if (!newUserName.trim() || !newUserEmail.trim()) {
+            toast({
+                title: "ข้อมูลไม่ครบถ้วน",
+                description: "กรุณากรอกชื่อและอีเมลให้ครบถ้วน",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const newUser: UserWithPermissions = {
+            id: `USR${String(users.length + 1).padStart(3, '0')}`,
+            name: newUserName.trim(),
+            email: newUserEmail.trim(),
+            avatar: `https://placehold.co/40x40.png?text=${newUserName.charAt(0)}`,
+            accessibleExams: []
+        };
+        
+        setUsers((prevUsers: UserWithPermissions[]) => [...prevUsers, newUser]);
+
+        toast({
+            title: "เพิ่มสมาชิกสำเร็จ",
+            description: `เพิ่มคุณ ${newUserName} (${newUserEmail}) เข้าระบบแล้ว`,
+        });
+        
+        setNewUserName("");
+        setNewUserEmail("");
+        setIsAddUserDialogOpen(false);
+    }
+    
+    return (
     <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
         <Card>
         <CardHeader>
@@ -341,8 +325,8 @@ const UsersTabContent = ({ isAddUserDialogOpen, setIsAddUserDialogOpen, userSear
             </DialogFooter>
         </DialogContent>
     </Dialog>
-);
-
+    );
+};
 
 export function DashboardContent() {
   const router = useRouter();
@@ -353,14 +337,7 @@ export function DashboardContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [exams, setExams] = useState<Exam[]>([]);
-
-  useEffect(() => {
-    // In a real app, you would fetch this data from Firestore
-    setExams([
-        { id: 'EXM001', name: 'General Knowledge Challenge', questionCount: 15, timeInMinutes: 20 },
-        { id: 'EXM002', name: 'World History Deep Dive', questionCount: 25, timeInMinutes: 30 },
-    ]);
-  }, []);
+  const [users, setUsers] = useState<UserWithPermissions[]>([]);
 
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [foundUser, setFoundUser] = useState<UserWithPermissions | null>(null);
@@ -379,7 +356,7 @@ export function DashboardContent() {
 
   const handleUserSearch = () => {
       if (!userSearchQuery.trim()) return;
-      const user = MOCK_USERS_DATA.find(u => u.email.toLowerCase() === userSearchQuery.toLowerCase().trim());
+      const user = users.find(u => u.email.toLowerCase() === userSearchQuery.toLowerCase().trim());
       setFoundUser(user || null);
       setSearchAttempted(true);
   };
@@ -400,13 +377,22 @@ export function DashboardContent() {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
+            const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
             
-            console.log("Exam data from sheet:", jsonData);
+            const newExam: Exam = {
+              id: `EXM${String(exams.length + 1).padStart(3, '0')}`,
+              name: file.name.replace(/\.[^/.]+$/, ""), // Use filename as exam name
+              questionCount: jsonData.length,
+              timeInMinutes: 30 // Default time
+            };
+            setExams(prev => [...prev, newExam]);
+
+            // We would also need to store the questions somewhere, maybe in localStorage for this prototype
+            localStorage.setItem(`exam_questions_${newExam.id}`, JSON.stringify(jsonData));
 
             toast({
               title: "อัปโหลดไฟล์สำเร็จ",
-              description: `อ่านข้อมูลจากไฟล์ ${file.name} เรียบร้อยแล้ว`,
+              description: `สร้างข้อสอบ "${newExam.name}" จำนวน ${newExam.questionCount} ข้อเรียบร้อยแล้ว`,
             });
         } catch (error) {
             console.error("Error reading the file:", error);
@@ -423,6 +409,7 @@ export function DashboardContent() {
   
   const handleDeleteExam = (examId: string) => {
     setExams(prev => prev.filter(exam => exam.id !== examId));
+    localStorage.removeItem(`exam_questions_${examId}`);
     toast({
         title: "ลบข้อสอบสำเร็จ",
         description: `ข้อสอบรหัส ${examId} ถูกลบออกจากระบบแล้ว`,
@@ -468,38 +455,26 @@ export function DashboardContent() {
       router.push(`/admin/edit-exam/${examId}`);
   };
 
-  const handleAddNewUser = () => {
-    if (!newUserName.trim() || !newUserEmail.trim()) {
-      toast({
-        title: "ข้อมูลไม่ครบถ้วน",
-        description: "กรุณากรอกชื่อและอีเมลให้ครบถ้วน",
-        variant: "destructive"
-      });
-      return;
-    }
-    // Here you would typically call a backend service to create the user.
-    // For now, we'll just show a success message.
-    console.log("Adding new user:", { name: newUserName, email: newUserEmail });
-    toast({
-      title: "เพิ่มสมาชิกสำเร็จ",
-      description: `เพิ่มคุณ ${newUserName} (${newUserEmail}) เข้าระบบแล้ว`,
-    });
-    // Reset form and close dialog
-    setNewUserName("");
-    setNewUserEmail("");
-    setIsAddUserDialogOpen(false);
-  }
+  const handleCreateNewExam = () => {
+    const newExamId = `EXM${String(exams.length + 1).padStart(3, '0')}`;
+    const newExam: Exam = {
+      id: newExamId,
+      name: `ข้อสอบใหม่ ${exams.length + 1}`,
+      questionCount: 0,
+      timeInMinutes: 20, // Default time
+    };
+    setExams(prev => [...prev, newExam]);
+    router.push(`/admin/edit-exam/${newExamId}`);
+  };
 
   const renderContent = () => {
     switch (currentTab) {
         case 'exams':
-            return <ExamsTabContent exams={exams} handleOpenEditDialog={handleOpenEditDialog} handleEditQuestions={handleEditQuestions} handleDeleteExam={handleDeleteExam} fileInputRef={fileInputRef} handleFileChange={handleFileChange} handleUploadClick={handleUploadClick} />;
-        case 'permissions':
-            return <PermissionsTabContent exams={exams} />;
+            return <ExamsTabContent exams={exams} handleOpenEditDialog={handleOpenEditDialog} handleEditQuestions={handleEditQuestions} handleDeleteExam={handleDeleteExam} fileInputRef={fileInputRef} handleFileChange={handleFileChange} handleUploadClick={handleUploadClick} handleCreateNewExam={handleCreateNewExam} />;
         case 'users':
-            return <UsersTabContent isAddUserDialogOpen={isAddUserDialogOpen} setIsAddUserDialogOpen={setIsAddUserDialogOpen} userSearchQuery={userSearchQuery} setUserSearchQuery={setUserSearchQuery} handleUserSearch={handleUserSearch} searchAttempted={searchAttempted} foundUser={foundUser} handleAddNewUser={handleAddNewUser} newUserName={newUserName} setNewUserName={setNewUserName} newUserEmail={newUserEmail} setNewUserEmail={setNewUserEmail} />;
+            return <UsersTabContent users={users} setUsers={setUsers} isAddUserDialogOpen={isAddUserDialogOpen} setIsAddUserDialogOpen={setIsAddUserDialogOpen} userSearchQuery={userSearchQuery} setUserSearchQuery={setUserSearchQuery} handleUserSearch={handleUserSearch} searchAttempted={searchAttempted} foundUser={foundUser} newUserName={newUserName} setNewUserName={setNewUserName} newUserEmail={newUserEmail} setNewUserEmail={setNewUserEmail} />;
         default:
-            return <ExamsTabContent exams={exams} handleOpenEditDialog={handleOpenEditDialog} handleEditQuestions={handleEditQuestions} handleDeleteExam={handleDeleteExam} fileInputRef={fileInputRef} handleFileChange={handleFileChange} handleUploadClick={handleUploadClick} />;
+            return <ExamsTabContent exams={exams} handleOpenEditDialog={handleOpenEditDialog} handleEditQuestions={handleEditQuestions} handleDeleteExam={handleDeleteExam} fileInputRef={fileInputRef} handleFileChange={handleFileChange} handleUploadClick={handleUploadClick} handleCreateNewExam={handleCreateNewExam} />;
     }
   }
 
@@ -560,5 +535,3 @@ export function DashboardContent() {
     </div>
   );
 }
-
-    

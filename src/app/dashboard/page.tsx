@@ -1,17 +1,36 @@
 
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Clock, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-// Mock data for quizzes, representing all quizzes in the system for the admin view
-const allQuizzes = [
-    { id: 'EXM001', title: 'General Knowledge Challenge', questions: 15, time: 20 },
-    { id: 'EXM002', title: 'World History Deep Dive', questions: 25, time: 30 },
-];
+type Exam = {
+    id: string;
+    name: string;
+    questionCount: number;
+    timeInMinutes: number;
+}
 
 export default function UserDashboardPage() {
+    const [allQuizzes, setAllQuizzes] = useState<Exam[]>([]);
+
+    useEffect(() => {
+        // In a real app, this data would be fetched. Here we get it from localStorage.
+        const quizzes: Exam[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("exam_details_")) {
+                const quiz = JSON.parse(localStorage.getItem(key)!);
+                quizzes.push(quiz);
+            }
+        }
+        setAllQuizzes(quizzes);
+    }, []);
+
+
     return (
         <div className="animate-in fade-in-50">
             <div className="mb-8">
@@ -23,17 +42,17 @@ export default function UserDashboardPage() {
                     {allQuizzes.map(quiz => (
                         <Card key={quiz.id} className="flex flex-col hover:shadow-lg transition-shadow duration-300">
                             <CardHeader>
-                                <CardTitle className="font-headline text-xl">{quiz.title}</CardTitle>
+                                <CardTitle className="font-headline text-xl">{quiz.name}</CardTitle>
                                 <CardDescription>บททดสอบความรู้ของคุณ</CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow space-y-3">
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <FileText className="w-4 h-4 mr-2" />
-                                    <span>{quiz.questions} คำถาม</span>
+                                    <span>{quiz.questionCount} คำถาม</span>
                                 </div>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <Clock className="w-4 h-4 mr-2" />
-                                    <span>{quiz.time} นาที</span>
+                                    <span>{quiz.timeInMinutes} นาที</span>
                                 </div>
                             </CardContent>
                             <CardFooter>
@@ -50,7 +69,7 @@ export default function UserDashboardPage() {
             ) : (
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
                     <h2 className="text-xl font-semibold">ไม่พบข้อสอบ</h2>
-                    <p className="text-muted-foreground mt-2">ยังไม่มีข้อสอบในระบบ</p>
+                    <p className="text-muted-foreground mt-2">ยังไม่มีข้อสอบในระบบที่ผู้ดูแลสร้างไว้</p>
                 </div>
             )}
         </div>

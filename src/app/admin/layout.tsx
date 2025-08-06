@@ -1,9 +1,8 @@
 
-
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutDashboard, LogOut, FileUp, Shield, Users, Eye } from "lucide-react";
+import { LayoutDashboard, LogOut, FileUp, Users, Eye } from "lucide-react";
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 
@@ -13,10 +12,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     
     const isActive = (path: string, tab?: string) => {
         const currentTab = searchParams.get('tab');
-        if (path === '/admin/dashboard' && tab) {
-            // If a tab is specified, check if it's the active one.
-            // If no tab is in the URL, default to 'exams'.
-            return currentTab === tab || (tab === 'exams' && !currentTab);
+        if (path === '/admin/dashboard') {
+            if (tab) {
+                 return currentTab === tab;
+            }
+            return !currentTab || currentTab === 'exams';
         }
         return pathname === path && !tab;
     };
@@ -34,18 +34,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <SidebarContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <Link href="/admin/dashboard" passHref>
+                                <Link href="/admin/dashboard?tab=exams" passHref>
                                     <SidebarMenuButton tooltip="Dashboard" size="lg" isActive={isActive('/admin/dashboard', 'exams')}>
                                         <FileUp />
                                         <span>จัดการข้อสอบ</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                             <SidebarMenuItem>
-                                <Link href="/admin/dashboard?tab=permissions" passHref>
-                                    <SidebarMenuButton tooltip="จัดการสิทธิ์" size="lg" isActive={isActive('/admin/dashboard', 'permissions')}>
-                                        <Shield />
-                                        <span>จัดการสิทธิ์</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
