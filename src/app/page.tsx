@@ -50,12 +50,16 @@ export default function LoginPage() {
   };
 
   const isUserRegistered = (email: string): boolean => {
+    if (typeof window === 'undefined') return false;
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith("user_")) {
-            const storedUser = JSON.parse(localStorage.getItem(key)!);
-            if (storedUser.email === email) {
-                return true;
+            const item = localStorage.getItem(key);
+            if(item){
+                const storedUser = JSON.parse(item);
+                if (storedUser.email && storedUser.email.toLowerCase() === email.toLowerCase()) {
+                    return true;
+                }
             }
         }
     }
@@ -176,5 +180,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
-    
