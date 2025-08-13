@@ -1,6 +1,4 @@
 
-"use client";
-
 import { Suspense } from "react";
 import { DashboardContent } from "@/components/admin/DashboardContent";
 import { Loader2 } from "lucide-react";
