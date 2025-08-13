@@ -3,13 +3,12 @@ import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  projectId: "examplify-8rgrq",
-  appId: "1:1056424535307:web:20ebf76ed80c289a1a6e0e",
-  storageBucket: "examplify-8rgrq.firebasestorage.app",
-  apiKey: "AIzaSyA5pchbjaCkKzHTMVozvScqKCDlIPdq81s",
-  authDomain: "examplify-8rgrq.firebaseapp.com",
-  measurementId: "",
-  messagingSenderId: "1056424535307"
+  projectId: "lunar-tooling-427219-j9r",
+  appId: "1:771549428053:web:9662820c4c4780521b8f10",
+  storageBucket: "lunar-tooling-427219-j9r.appspot.com",
+  apiKey: "AIzaSyDP2yF1Hl_wP0nB5_a83151g3NYqRcS3sE",
+  authDomain: "lunar-tooling-427219-j9r.firebaseapp.com",
+  messagingSenderId: "771549428053"
 };
 
 // Initialize Firebase
