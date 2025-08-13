@@ -207,9 +207,27 @@ const UsersTabContent = ({ users, isAddUserDialogOpen, setIsAddUserDialogOpen, h
                                 <TableCell>{user.name}</TableCell>
                                 <TableCell>{user.email}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="destructive" size="sm" onClick={() => handleDeleteUser(user.id)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>ยืนยันการลบผู้ใช้?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้ {user.name} ({user.email})? การกระทำนี้ไม่สามารถย้อนกลับได้
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDeleteUser(user.id)} className="bg-destructive hover:bg-destructive/90">
+                                            ยืนยัน
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -293,27 +311,45 @@ export function DashboardContent() {
   useEffect(() => {
     try {
         const storedExams: Exam[] = [];
-        const storedUsers: UserProfile[] = [];
+        let storedUsers: UserProfile[] = [];
+        let hasUsers = false;
+
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key?.startsWith('exam_details_')) {
                 const exam = JSON.parse(localStorage.getItem(key)!);
-                // Make sure questions are also loaded to reflect correct count
                 const questions = JSON.parse(localStorage.getItem(`exam_questions_${exam.id}`) || '[]');
                 exam.questionCount = questions.length;
                 storedExams.push(exam);
-
             } else if (key?.startsWith('user_')) {
+                hasUsers = true;
                 storedUsers.push(JSON.parse(localStorage.getItem(key)!));
             }
         }
+        
+        // If no users found in localStorage, create a default user
+        if (!hasUsers) {
+            const defaultUser: UserProfile = {
+                id: uuidv4(),
+                name: "Narongtorn S.",
+                email: "narongtorn.s@attorney285.co.th",
+                avatar: `https://placehold.co/40x40.png?text=N`,
+            };
+            localStorage.setItem(`user_${defaultUser.id}`, JSON.stringify(defaultUser));
+            storedUsers = [defaultUser];
+            toast({
+              title: "สร้างผู้ใช้เริ่มต้น",
+              description: `เพิ่ม ${defaultUser.email} เข้าระบบแล้ว`,
+            });
+        }
+        
         setExams(storedExams);
         setUsers(storedUsers);
     } catch (error) {
         console.error("Could not load data from localStorage", error);
         toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถโหลดข้อมูลที่บันทึกไว้ได้", variant: "destructive" });
     }
-  }, []);
+  }, [toast]);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -446,6 +482,17 @@ export function DashboardContent() {
         });
         return;
     }
+    
+    // Check for duplicate email
+    const isDuplicate = users.some(user => user.email.toLowerCase() === newUserEmail.trim().toLowerCase());
+    if (isDuplicate) {
+        toast({
+            title: "อีเมลซ้ำ",
+            description: "มีผู้ใช้งานอีเมลนี้ในระบบแล้ว",
+            variant: "destructive"
+        });
+        return;
+    }
 
     const newUser: UserProfile = {
         id: uuidv4(),
@@ -472,6 +519,17 @@ export function DashboardContent() {
       const updatedUsers = users.filter(user => user.id !== userId);
       setUsers(updatedUsers);
       localStorage.removeItem(`user_${userId}`);
+
+      // Also remove user's permissions from all exams
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if(key && key.startsWith('permissions_')) {
+            const permissions = JSON.parse(localStorage.getItem(key)!);
+            const updatedPermissions = permissions.filter((id: string) => id !== userId);
+            localStorage.setItem(key, JSON.stringify(updatedPermissions));
+        }
+      }
+
       toast({
           title: "ลบผู้ใช้สำเร็จ",
           description: "ผู้ใช้ถูกลบออกจากระบบแล้ว",
