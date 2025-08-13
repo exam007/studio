@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BookOpen, LogIn, Terminal } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -49,16 +49,47 @@ export default function LoginPage() {
     }
   };
 
+  const isUserRegistered = (email: string): boolean => {
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("user_")) {
+            const storedUser = JSON.parse(localStorage.getItem(key)!);
+            if (storedUser.email === email) {
+                return true;
+            }
+        }
+    }
+    return false;
+  }
+
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithPopup(auth, provider);
-        toast({
-            title: "เข้าสู่ระบบด้วย Google สำเร็จ",
-            description: "กำลังนำคุณไปยังหน้าแดชบอร์ด...",
-            className: "bg-green-100 dark:bg-green-900",
-        });
-        router.push('/dashboard');
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        if (user && user.email) {
+            // Here, we check if the user is registered by the admin.
+            if(isUserRegistered(user.email)) {
+                 toast({
+                    title: "เข้าสู่ระบบด้วย Google สำเร็จ",
+                    description: "กำลังนำคุณไปยังหน้าแดชบอร์ด...",
+                    className: "bg-green-100 dark:bg-green-900",
+                });
+                router.push('/dashboard');
+            } else {
+                // If user is not registered, deny access.
+                 toast({
+                    title: "การเข้าถึงถูกปฏิเสธ",
+                    description: "บัญชีของคุณยังไม่ได้รับการลงทะเบียนโดยผู้ดูแลระบบ",
+                    variant: "destructive",
+                });
+                await auth.signOut();
+            }
+        } else {
+             throw new Error("ไม่สามารถรับข้อมูลผู้ใช้จาก Google ได้");
+        }
+
     } catch (error: any) {
         console.error("Authentication error:", error);
         toast({

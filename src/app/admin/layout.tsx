@@ -2,7 +2,7 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutDashboard, LogOut, FileUp, Users, Eye } from "lucide-react";
+import { LayoutDashboard, LogOut, FileUp, Users, Eye, ShieldCheck } from "lucide-react";
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 
@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }
             return !currentTab || currentTab === 'exams';
         }
-        return pathname === path && !tab;
+        return pathname.startsWith(path) && !tab;
     };
 
     return (

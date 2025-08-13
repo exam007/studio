@@ -21,10 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  FileUp, Users, HelpCircle, Upload, ArrowRight,
+  FileUp, Users, HelpCircle, Upload, ArrowRight, ShieldCheck,
   User, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle
 } from "lucide-react";
-
 
 export type Exam = {
     id: string;
@@ -33,15 +32,14 @@ export type Exam = {
     timeInMinutes: number;
 }
 
-export type UserWithPermissions = {
+export type UserProfile = {
     id: string;
     email: string;
     name: string;
-    avatar: string;
-    accessibleExams: { id: string; name: string }[];
+    avatar?: string;
 }
 
-const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, handleDeleteExam, fileInputRef, handleFileChange, handleUploadClick, handleCreateNewExam }: any) => (
+const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, handleDeleteExam, fileInputRef, handleFileChange, handleUploadClick, handleCreateNewExam, handleManagePermissions }: any) => (
     <Card>
         <CardHeader>
           <CardTitle>รายการข้อสอบ</CardTitle>
@@ -120,6 +118,10 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
                           <FilePenLine className="mr-2 h-4 w-4" />
                           แก้ไขคำถาม
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleManagePermissions(exam.id)}>
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            จัดการสิทธิ์
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -161,136 +163,74 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
       </Card>
 );
 
-const UsersTabContent = ({ users, setUsers, isAddUserDialogOpen, setIsAddUserDialogOpen, userSearchQuery, setUserSearchQuery, handleUserSearch, searchAttempted, foundUser, newUserName, setNewUserName, newUserEmail, setNewUserEmail }: any) => {
-    
-    const { toast } = useToast();
-
-    const handleAddNewUser = () => {
-        if (!newUserName.trim() || !newUserEmail.trim()) {
-            toast({
-                title: "ข้อมูลไม่ครบถ้วน",
-                description: "กรุณากรอกชื่อและอีเมลให้ครบถ้วน",
-                variant: "destructive"
-            });
-            return;
-        }
-
-        const newUser: UserWithPermissions = {
-            id: `USR${String(users.length + 1).padStart(3, '0')}`,
-            name: newUserName.trim(),
-            email: newUserEmail.trim(),
-            avatar: `https://placehold.co/40x40.png?text=${newUserName.charAt(0)}`,
-            accessibleExams: []
-        };
-        
-        setUsers((prevUsers: UserWithPermissions[]) => [...prevUsers, newUser]);
-
-        toast({
-            title: "เพิ่มสมาชิกสำเร็จ",
-            description: `เพิ่มคุณ ${newUserName} (${newUserEmail}) เข้าระบบแล้ว`,
-        });
-        
-        setNewUserName("");
-        setNewUserEmail("");
-        setIsAddUserDialogOpen(false);
-    }
-    
+const UsersTabContent = ({ users, isAddUserDialogOpen, setIsAddUserDialogOpen, handleAddNewUser, newUserName, setNewUserName, newUserEmail, setNewUserEmail, handleDeleteUser }: any) => {
     return (
     <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
         <Card>
-        <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <CardTitle>จัดการผู้ใช้งาน</CardTitle>
-                    <CardDescription>ดูข้อมูล, ค้นหา, และเพิ่มผู้ใช้ใหม่ในระบบ</CardDescription>
-                </div>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        เพิ่มสมาชิกใหม่
-                    </Button>
-                </DialogTrigger>
-            </div>
-            <div className="flex items-center gap-2 pt-4">
-            <div className="relative flex-1">
-                <Input 
-                placeholder="ค้นหาด้วย Email..." 
-                className="w-full" 
-                value={userSearchQuery}
-                onChange={(e) => setUserSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleUserSearch()}
-                />
-            </div>
-            <Button onClick={handleUserSearch}>ค้นหาผู้ใช้</Button>
-            </div>
-        </CardHeader>
-        <CardContent>
-            {searchAttempted ? (
-            foundUser ? (
-                <Card className="mt-6 animate-in fade-in-50">
-                <CardHeader className="flex flex-row items-center gap-4">
-                    <Avatar className="h-16 w-16 border-2 border-primary">
-                    <AvatarImage src={foundUser.avatar} data-ai-hint="user avatar" />
-                    <AvatarFallback>{foundUser.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                    <CardTitle>{foundUser.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 pt-1">
-                        <Mail className="h-4 w-4" /> {foundUser.email}
-                    </CardDescription>
-                    <Badge variant="secondary" className="mt-2">{foundUser.id}</Badge>
+                        <CardTitle>จัดการผู้ใช้งาน</CardTitle>
+                        <CardDescription>เพิ่ม, ลบ, และดูข้อมูลผู้ใช้ในระบบ</CardDescription>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <h3 className="font-semibold mb-3 mt-4 text-base">
-                    สิทธิ์การเข้าถึงข้อสอบ ({foundUser.accessibleExams.length} รายการ)
-                    </h3>
-                    {foundUser.accessibleExams.length > 0 ? (
-                    <div className="border rounded-md">
-                        <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>รหัสข้อสอบ</TableHead>
-                            <TableHead>ชื่อข้อสอบ</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {foundUser.accessibleExams.map((exam: Exam) => (
-                            <TableRow key={exam.id}>
-                                <TableCell><Badge variant="outline">{exam.id}</Badge></TableCell>
-                                <TableCell>{exam.name}</TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                        </Table>
-                    </div>
-                    ) : (
-                    <p className="text-muted-foreground text-center py-4">ผู้ใช้ยังไม่มีสิทธิ์เข้าถึงข้อสอบใดๆ</p>
-                    )}
-                </CardContent>
-                </Card>
-            ) : (
-                <div className="text-center py-16 border-2 border-dashed rounded-lg mt-6">
-                <User className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium">ไม่พบผู้ใช้งาน</h3>
-                <p className="mt-1 text-sm text-muted-foreground">ไม่พบผู้ใช้ด้วยอีเมลที่คุณค้นหา</p>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            เพิ่มสมาชิกใหม่
+                        </Button>
+                    </DialogTrigger>
                 </div>
-            )
-            ) : (
-            <div className="text-center py-16 border-2 border-dashed rounded-lg mt-6">
-                <User className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium">ค้นหาผู้ใช้</h3>
-                <p className="mt-1 text-sm text-muted-foreground">กรอกอีเมลของผู้ใช้เพื่อดูสิทธิ์การเข้าถึงข้อสอบ</p>
-            </div>
-            )}
-        </CardContent>
+                <div className="flex items-center gap-2 pt-4">
+                    <Input placeholder="ค้นหาด้วย Email..." className="w-full" />
+                </div>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>User ID</TableHead>
+                            <TableHead>Avatar</TableHead>
+                            <TableHead>ชื่อ</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead className="text-right">จัดการ</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {users.map((user: UserProfile) => (
+                            <TableRow key={user.id}>
+                                <TableCell><Badge variant="secondary">{user.id}</Badge></TableCell>
+                                <TableCell>
+                                    <Avatar>
+                                        <AvatarImage src={user.avatar} data-ai-hint="user avatar" />
+                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                </TableCell>
+                                <TableCell>{user.name}</TableCell>
+                                <TableCell>{user.email}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="destructive" size="sm" onClick={() => handleDeleteUser(user.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                         {users.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">
+                                    ยังไม่มีสมาชิกในระบบ
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
         </Card>
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-            <DialogTitle>เพิ่มสมาชิกใหม่</DialogTitle>
-            <DialogDescription>
-                กรอกข้อมูลเพื่อสร้างบัญชีผู้ใช้ใหม่ในระบบ
-            </DialogDescription>
+                <DialogTitle>เพิ่มสมาชิกใหม่</DialogTitle>
+                <DialogDescription>
+                    กรอกข้อมูลเพื่อสร้างบัญชีผู้ใช้ใหม่ในระบบ
+                </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -298,11 +238,11 @@ const UsersTabContent = ({ users, setUsers, isAddUserDialogOpen, setIsAddUserDia
                     ชื่อ-สกุล
                     </Label>
                     <Input
-                    id="new-user-name"
-                    value={newUserName}
-                    onChange={(e) => setNewUserName(e.target.value)}
-                    className="col-span-3"
-                    placeholder="John Doe"
+                        id="new-user-name"
+                        value={newUserName}
+                        onChange={(e) => setNewUserName(e.target.value)}
+                        className="col-span-3"
+                        placeholder="John Doe"
                     />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -310,12 +250,12 @@ const UsersTabContent = ({ users, setUsers, isAddUserDialogOpen, setIsAddUserDia
                     อีเมล
                     </Label>
                     <Input
-                    id="new-user-email"
-                    type="email"
-                    value={newUserEmail}
-                    onChange={(e) => setNewUserEmail(e.target.value)}
-                    className="col-span-3"
-                    placeholder="user@example.com"
+                        id="new-user-email"
+                        type="email"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        className="col-span-3"
+                        placeholder="user@example.com"
                     />
                 </div>
             </div>
@@ -337,11 +277,7 @@ export function DashboardContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [exams, setExams] = useState<Exam[]>([]);
-  const [users, setUsers] = useState<UserWithPermissions[]>([]);
-
-  const [userSearchQuery, setUserSearchQuery] = useState("");
-  const [foundUser, setFoundUser] = useState<UserWithPermissions | null>(null);
-  const [searchAttempted, setSearchAttempted] = useState(false);
+  const [users, setUsers] = useState<UserProfile[]>([]);
 
   // State for editing exam
   const [examToEdit, setExamToEdit] = useState<Exam | null>(null);
@@ -354,12 +290,26 @@ export function DashboardContent() {
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
 
-  const handleUserSearch = () => {
-      if (!userSearchQuery.trim()) return;
-      const user = users.find(u => u.email.toLowerCase() === userSearchQuery.toLowerCase().trim());
-      setFoundUser(user || null);
-      setSearchAttempted(true);
-  };
+  // Load data from localStorage on initial render
+  useEffect(() => {
+    try {
+        const storedExams: Exam[] = [];
+        const storedUsers: UserProfile[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith('exam_details_')) {
+                storedExams.push(JSON.parse(localStorage.getItem(key)!));
+            } else if (key?.startsWith('user_')) {
+                storedUsers.push(JSON.parse(localStorage.getItem(key)!));
+            }
+        }
+        setExams(storedExams);
+        setUsers(storedUsers);
+    } catch (error) {
+        console.error("Could not load data from localStorage", error);
+        toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถโหลดข้อมูลที่บันทึกไว้ได้", variant: "destructive" });
+    }
+  }, []);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -379,15 +329,17 @@ export function DashboardContent() {
             
             const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
             
+            const newExamId = `EXM${String(exams.length + 1).padStart(3, '0')}`;
             const newExam: Exam = {
-              id: `EXM${String(exams.length + 1).padStart(3, '0')}`,
+              id: newExamId,
               name: file.name.replace(/\.[^/.]+$/, ""), // Use filename as exam name
               questionCount: jsonData.length,
               timeInMinutes: 30 // Default time
             };
-            setExams(prev => [...prev, newExam]);
-
-            // We would also need to store the questions somewhere, maybe in localStorage for this prototype
+            
+            const updatedExams = [...exams, newExam];
+            setExams(updatedExams);
+            localStorage.setItem(`exam_details_${newExam.id}`, JSON.stringify(newExam));
             localStorage.setItem(`exam_questions_${newExam.id}`, JSON.stringify(jsonData));
 
             toast({
@@ -408,8 +360,11 @@ export function DashboardContent() {
   };
   
   const handleDeleteExam = (examId: string) => {
-    setExams(prev => prev.filter(exam => exam.id !== examId));
+    const updatedExams = exams.filter(exam => exam.id !== examId)
+    setExams(updatedExams);
+    localStorage.removeItem(`exam_details_${examId}`);
     localStorage.removeItem(`exam_questions_${examId}`);
+    localStorage.removeItem(`permissions_${examId}`); // Also remove permissions
     toast({
         title: "ลบข้อสอบสำเร็จ",
         description: `ข้อสอบรหัส ${examId} ถูกลบออกจากระบบแล้ว`,
@@ -436,9 +391,12 @@ export function DashboardContent() {
         return;
     }
     
-    setExams(prev => prev.map(exam => 
-        exam.id === examToEdit.id ? { ...exam, name: newExamName.trim(), timeInMinutes: time } : exam
-    ));
+    const updatedExam = { ...examToEdit, name: newExamName.trim(), timeInMinutes: time };
+    const updatedExams = exams.map(exam => 
+        exam.id === examToEdit.id ? updatedExam : exam
+    );
+    setExams(updatedExams);
+    localStorage.setItem(`exam_details_${examToEdit.id}`, JSON.stringify(updatedExam));
 
     toast({
         title: "แก้ไขสำเร็จ",
@@ -455,26 +413,103 @@ export function DashboardContent() {
       router.push(`/admin/edit-exam/${examId}`);
   };
 
+  const handleManagePermissions = (examId: string) => {
+    router.push(`/admin/permissions/${examId}`);
+  };
+
   const handleCreateNewExam = () => {
-    const newExamId = `EXM${String(exams.length + 1).padStart(3, '0')}`;
+    const newExamId = uuidv4();
     const newExam: Exam = {
       id: newExamId,
       name: `ข้อสอบใหม่ ${exams.length + 1}`,
       questionCount: 0,
       timeInMinutes: 20, // Default time
     };
-    setExams(prev => [...prev, newExam]);
+    const updatedExams = [...exams, newExam];
+    setExams(updatedExams);
+    localStorage.setItem(`exam_details_${newExamId}`, JSON.stringify(newExam));
     router.push(`/admin/edit-exam/${newExamId}`);
   };
+
+  const handleAddNewUser = () => {
+    if (!newUserName.trim() || !newUserEmail.trim()) {
+        toast({
+            title: "ข้อมูลไม่ครบถ้วน",
+            description: "กรุณากรอกชื่อและอีเมลให้ครบถ้วน",
+            variant: "destructive"
+        });
+        return;
+    }
+
+    const newUser: UserProfile = {
+        id: uuidv4(),
+        name: newUserName.trim(),
+        email: newUserEmail.trim().toLowerCase(),
+        avatar: `https://placehold.co/40x40.png?text=${newUserName.trim().charAt(0)}`,
+    };
+    
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    localStorage.setItem(`user_${newUser.id}`, JSON.stringify(newUser));
+
+    toast({
+        title: "เพิ่มสมาชิกสำเร็จ",
+        description: `เพิ่มคุณ ${newUser.name} (${newUser.email}) เข้าระบบแล้ว`,
+    });
+    
+    setNewUserName("");
+    setNewUserEmail("");
+    setIsAddUserDialogOpen(false);
+  }
+
+  const handleDeleteUser = (userId: string) => {
+      const updatedUsers = users.filter(user => user.id !== userId);
+      setUsers(updatedUsers);
+      localStorage.removeItem(`user_${userId}`);
+      toast({
+          title: "ลบผู้ใช้สำเร็จ",
+          description: "ผู้ใช้ถูกลบออกจากระบบแล้ว",
+      });
+  }
 
   const renderContent = () => {
     switch (currentTab) {
         case 'exams':
-            return <ExamsTabContent exams={exams} handleOpenEditDialog={handleOpenEditDialog} handleEditQuestions={handleEditQuestions} handleDeleteExam={handleDeleteExam} fileInputRef={fileInputRef} handleFileChange={handleFileChange} handleUploadClick={handleUploadClick} handleCreateNewExam={handleCreateNewExam} />;
+            return <ExamsTabContent 
+                exams={exams} 
+                handleOpenEditDialog={handleOpenEditDialog} 
+                handleEditQuestions={handleEditQuestions} 
+                handleDeleteExam={handleDeleteExam} 
+                fileInputRef={fileInputRef} 
+                handleFileChange={handleFileChange} 
+                handleUploadClick={handleUploadClick} 
+                handleCreateNewExam={handleCreateNewExam}
+                handleManagePermissions={handleManagePermissions}
+                />;
         case 'users':
-            return <UsersTabContent users={users} setUsers={setUsers} isAddUserDialogOpen={isAddUserDialogOpen} setIsAddUserDialogOpen={setIsAddUserDialogOpen} userSearchQuery={userSearchQuery} setUserSearchQuery={setUserSearchQuery} handleUserSearch={handleUserSearch} searchAttempted={searchAttempted} foundUser={foundUser} newUserName={newUserName} setNewUserName={setNewUserName} newUserEmail={newUserEmail} setNewUserEmail={setNewUserEmail} />;
+            return <UsersTabContent 
+                users={users} 
+                isAddUserDialogOpen={isAddUserDialogOpen} 
+                setIsAddUserDialogOpen={setIsAddUserDialogOpen} 
+                handleAddNewUser={handleAddNewUser}
+                newUserName={newUserName} 
+                setNewUserName={setNewUserName}
+                newUserEmail={newUserEmail}
+                setNewUserEmail={setNewUserEmail}
+                handleDeleteUser={handleDeleteUser}
+                />;
         default:
-            return <ExamsTabContent exams={exams} handleOpenEditDialog={handleOpenEditDialog} handleEditQuestions={handleEditQuestions} handleDeleteExam={handleDeleteExam} fileInputRef={fileInputRef} handleFileChange={handleFileChange} handleUploadClick={handleUploadClick} handleCreateNewExam={handleCreateNewExam} />;
+            return <ExamsTabContent 
+                exams={exams} 
+                handleOpenEditDialog={handleOpenEditDialog} 
+                handleEditQuestions={handleEditQuestions} 
+                handleDeleteExam={handleDeleteExam} 
+                fileInputRef={fileInputRef} 
+                handleFileChange={handleFileChange} 
+                handleUploadClick={handleUploadClick} 
+                handleCreateNewExam={handleCreateNewExam}
+                handleManagePermissions={handleManagePermissions}
+                />;
     }
   }
 
