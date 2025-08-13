@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { BookOpen, LogIn, Terminal } from "lucide-react";
+import { BookOpen, LogIn, Terminal, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
@@ -31,6 +31,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
 
   const handleAdminLogin = (e: React.FormEvent) => {
@@ -67,13 +68,13 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
         if (user && user.email) {
-            // Here, we check if the user is registered by the admin.
             if(isUserRegistered(user.email)) {
                  toast({
                     title: "เข้าสู่ระบบด้วย Google สำเร็จ",
@@ -82,7 +83,6 @@ export default function LoginPage() {
                 });
                 router.push('/dashboard');
             } else {
-                // If user is not registered, deny access.
                  toast({
                     title: "การเข้าถึงถูกปฏิเสธ",
                     description: "บัญชีของคุณยังไม่ได้รับการลงทะเบียนโดยผู้ดูแลระบบ",
@@ -93,14 +93,17 @@ export default function LoginPage() {
         } else {
              throw new Error("ไม่สามารถรับข้อมูลผู้ใช้จาก Google ได้");
         }
-
     } catch (error: any) {
-        console.error("Authentication error:", error);
-        toast({
-            title: "เกิดข้อผิดพลาด",
-            description: `ไม่สามารถเข้าสู่ระบบด้วย Google ได้: ${error.message}`,
-            variant: "destructive",
-        });
+        // Don't show toast for user closing the popup
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                title: "เกิดข้อผิดพลาดในการล็อกอิน",
+                description: `ไม่สามารถเข้าสู่ระบบด้วย Google ได้: ${error.message}`,
+                variant: "destructive",
+            });
+        }
+    } finally {
+        setIsGoogleLoading(false);
     }
   };
 
@@ -119,9 +122,18 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="px-6 pb-6">
             <div className="flex flex-col space-y-4">
-                <Button onClick={handleGoogleLogin} variant="outline" className="h-11 text-base">
-                    <GoogleIcon className="mr-2"/>
-                    เข้าสู่ระบบด้วย Google
+                <Button onClick={handleGoogleLogin} variant="outline" className="h-11 text-base" disabled={isGoogleLoading}>
+                    {isGoogleLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            กำลังตรวจสอบ...
+                        </>
+                    ) : (
+                        <>
+                            <GoogleIcon className="mr-2"/>
+                            เข้าสู่ระบบด้วย Google
+                        </>
+                    )}
                 </Button>
                 
                 <div className="flex items-center space-x-2 my-2">
