@@ -4,7 +4,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,8 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  FileUp, Users, HelpCircle, Upload, ArrowRight, ShieldCheck,
-  User, Mail, MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle
+  FileUp, Users, HelpCircle, Upload, ShieldCheck,
+  MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle
 } from "lucide-react";
 
 export type Exam = {
@@ -298,7 +297,12 @@ export function DashboardContent() {
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key?.startsWith('exam_details_')) {
-                storedExams.push(JSON.parse(localStorage.getItem(key)!));
+                const exam = JSON.parse(localStorage.getItem(key)!);
+                // Make sure questions are also loaded to reflect correct count
+                const questions = JSON.parse(localStorage.getItem(`exam_questions_${exam.id}`) || '[]');
+                exam.questionCount = questions.length;
+                storedExams.push(exam);
+
             } else if (key?.startsWith('user_')) {
                 storedUsers.push(JSON.parse(localStorage.getItem(key)!));
             }
@@ -329,7 +333,7 @@ export function DashboardContent() {
             
             const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
             
-            const newExamId = `EXM${String(exams.length + 1).padStart(3, '0')}`;
+            const newExamId = uuidv4();
             const newExam: Exam = {
               id: newExamId,
               name: file.name.replace(/\.[^/.]+$/, ""), // Use filename as exam name
@@ -428,6 +432,8 @@ export function DashboardContent() {
     const updatedExams = [...exams, newExam];
     setExams(updatedExams);
     localStorage.setItem(`exam_details_${newExamId}`, JSON.stringify(newExam));
+    // Also create an empty questions array
+    localStorage.setItem(`exam_questions_${newExamId}`, JSON.stringify([]));
     router.push(`/admin/edit-exam/${newExamId}`);
   };
 
@@ -570,3 +576,5 @@ export function DashboardContent() {
     </div>
   );
 }
+
+    

@@ -70,14 +70,16 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
   };
 
   const handleSaveChanges = () => {
-    // In a real app, this would be an API call. Here, we use localStorage.
     try {
-        const examDetails = { 
-            id, 
-            name: examName, 
-            questionCount: questions.length,
-            timeInMinutes: 20 // You might want a field for this
-        };
+        const examDetailsJSON = localStorage.getItem(`exam_details_${id}`);
+        if (!examDetailsJSON) {
+            throw new Error("Exam details not found!");
+        }
+        const examDetails = JSON.parse(examDetailsJSON);
+        
+        // Update question count before saving
+        examDetails.questionCount = questions.length;
+
         localStorage.setItem(`exam_details_${id}`, JSON.stringify(examDetails));
         localStorage.setItem(`exam_questions_${id}`, JSON.stringify(questions));
 
@@ -143,3 +145,5 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
+
+    

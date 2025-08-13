@@ -25,29 +25,33 @@ type ExamDetails = {
 export default function ManagePermissionsPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const [examDetails, setExamDetails] = useState<ExamDetails | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
+  const [usersWithPermission, setUsersWithPermission] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [newUserEmails, setNewUserEmails] = useState("");
 
   useEffect(() => {
-    // In a real app, you'd fetch this data. We use localStorage for this prototype.
+    // Load exam details
     const storedExam = localStorage.getItem(`exam_details_${id}`);
     if (storedExam) {
         setExamDetails(JSON.parse(storedExam));
     }
     
-    const storedUsers: User[] = [];
+    // Load all users from localStorage
+    const storedAllUsers: User[] = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith("user_")) {
             const user = JSON.parse(localStorage.getItem(key)!);
-            storedUsers.push(user);
+            storedAllUsers.push(user);
         }
     }
+    setAllUsers(storedAllUsers);
     
+    // Load users who already have permission for this exam
     const storedPermissions = localStorage.getItem(`permissions_${id}`);
     if(storedPermissions) {
         const userIdsWithPermission: string[] = JSON.parse(storedPermissions);
-        setUsers(storedUsers.filter(u => userIdsWithPermission.includes(u.id)));
+        setUsersWithPermission(storedAllUsers.filter(u => userIdsWithPermission.includes(u.id)));
     }
 
   }, [id]);
@@ -57,39 +61,37 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
 
     const emailsToAdd = newUserEmails
         .split(',')
-        .map(email => email.trim())
+        .map(email => email.trim().toLowerCase())
         .filter(Boolean);
 
-    // In a real app, you'd find users by email from your database
-    // For this prototype, we'll assume the emails are valid and create mock users
-    const newUsers = emailsToAdd.map((email, index) => ({
-      id: `USR_NEW_${Date.now()}_${index}`,
-      email: email,
-      name: "Invited User",
-    }));
+    const usersToGrantPermission = allUsers.filter(u => emailsToAdd.includes(u.email.toLowerCase()));
 
-    if (newUsers.length > 0) {
-      setUsers(prev => [...prev, ...newUsers]);
-      // Here you'd also save the new permissions
-      const updatedUserIds = [...users.map(u => u.id), ...newUsers.map(u => u.id)];
+    if (usersToGrantPermission.length > 0) {
+      const updatedUsersWithPermission = [...usersWithPermission];
+      usersToGrantPermission.forEach(userToAdd => {
+          if (!updatedUsersWithPermission.find(u => u.id === userToAdd.id)) {
+              updatedUsersWithPermission.push(userToAdd);
+          }
+      });
+      
+      setUsersWithPermission(updatedUsersWithPermission);
+      const updatedUserIds = updatedUsersWithPermission.map(u => u.id);
       localStorage.setItem(`permissions_${id}`, JSON.stringify(updatedUserIds));
       setNewUserEmails("");
     }
   };
 
   const handleRemovePermission = (userId: string) => {
-    setUsers(prev => {
-        const newUsers = prev.filter(u => u.id !== userId);
-        const newUserIds = newUsers.map(u => u.id);
-        localStorage.setItem(`permissions_${id}`, JSON.stringify(newUserIds));
-        return newUsers;
-    });
+    const updatedUsers = usersWithPermission.filter(u => u.id !== userId);
+    setUsersWithPermission(updatedUsers);
+    const updatedUserIds = updatedUsers.map(u => u.id);
+    localStorage.setItem(`permissions_${id}`, JSON.stringify(updatedUserIds));
   };
 
   return (
     <div className="animate-in fade-in-50">
       <div className="mb-6">
-        <Link href="/admin/dashboard?tab=permissions">
+        <Link href="/admin/dashboard?tab=exams">
             <Button variant="outline" size="sm" className="mb-4">
                 <ArrowLeft className="mr-2 h-4 w-4"/>
                 กลับไปหน้าหลัก
@@ -104,7 +106,7 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
       <Card>
         <CardHeader>
           <CardTitle>เพิ่มสิทธิ์การเข้าถึง</CardTitle>
-          <CardDescription>กรอกอีเมลของผู้ใช้ คั่นด้วยจุลภาค (,) เพื่อเพิ่มสิทธิ์ทีละหลายคน</CardDescription>
+          <CardDescription>กรอกอีเมลของผู้ใช้ที่ลงทะเบียนแล้วในระบบ คั่นด้วยจุลภาค (,) เพื่อเพิ่มสิทธิ์ทีละหลายคน</CardDescription>
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <div className="relative flex-1">
               <ShieldCheck className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -138,7 +140,7 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {usersWithPermission.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
                         <Badge variant="secondary">{user.id}</Badge>
@@ -153,7 +155,7 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
                     </TableCell>
                   </TableRow>
                 ))}
-                 {users.length === 0 && (
+                 {usersWithPermission.length === 0 && (
                     <TableRow>
                         <TableCell colSpan={4} className="h-24 text-center">ยังไม่มีผู้ใช้คนใดได้รับสิทธิ์สำหรับข้อสอบนี้</TableCell>
                     </TableRow>
@@ -166,3 +168,5 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
     </div>
   );
 }
+
+    
