@@ -107,6 +107,17 @@ export default function LoginPage() {
     }
   };
 
+    if (isGoogleLoading) {
+        return (
+            <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <Loader2 className="w-16 h-16 animate-spin text-primary"/>
+                    <h1 className="text-2xl font-semibold text-foreground">กำลังลงชื่อเข้าใช้...</h1>
+                    <p className="text-muted-foreground">โปรดรอสักครู่ ระบบกำลังตรวจสอบข้อมูลของคุณ</p>
+                </div>
+            </main>
+        )
+    }
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
@@ -123,17 +134,8 @@ export default function LoginPage() {
         <CardContent className="px-6 pb-6">
             <div className="flex flex-col space-y-4">
                 <Button onClick={handleGoogleLogin} variant="outline" className="h-11 text-base" disabled={isGoogleLoading}>
-                    {isGoogleLoading ? (
-                        <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            กำลังตรวจสอบ...
-                        </>
-                    ) : (
-                        <>
-                            <GoogleIcon className="mr-2"/>
-                            เข้าสู่ระบบด้วย Google
-                        </>
-                    )}
+                    <GoogleIcon className="mr-2"/>
+                    เข้าสู่ระบบด้วย Google
                 </Button>
                 
                 <div className="flex items-center space-x-2 my-2">
