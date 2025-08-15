@@ -91,7 +91,7 @@ export default function LoginPage() {
                     className: "bg-green-100 dark:bg-green-900",
                 });
                 router.push('/dashboard');
-                return; // <<< FIX: Stop execution here to prevent signout
+                return; // FIX: Stop execution here to prevent signout for existing users
             } else {
                 // 2. User is not registered, check for pending requests
                 const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
@@ -105,23 +105,15 @@ export default function LoginPage() {
                         variant: "default",
                     });
                 } else {
-                    // 2b. No pending request, create one
-                    const newRequest: PendingRequest = {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName || 'N/A',
-                        photoURL: user.photoURL || `https://placehold.co/40x40.png?text=${user.email.charAt(0).toUpperCase()}`
-                    };
-                    pendingRequests.push(newRequest);
-                    localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
-                     // Manually trigger storage event for other tabs
-                    window.dispatchEvent(new Event('storage'));
-                    toast({
-                        title: "ส่งคำขอสำเร็จ",
-                        description: "คำขอของคุณถูกส่งไปให้ผู้ดูแลระบบเพื่ออนุมัติแล้ว",
-                        variant: "default"
+                    // 2b. This user is neither registered nor pending. Show error toast.
+                     toast({
+                        title: "การเข้าถึงถูกปฏิเสธ",
+                        description: "ขออภัย คุณไม่มีชื่ออยู่ในระบบ โปรดติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์เข้าใช้งาน",
+                        variant: "destructive",
+                        duration: 9000,
                     });
                 }
+                // Sign out because they are not an approved user.
                 await auth.signOut();
             }
         } else {
