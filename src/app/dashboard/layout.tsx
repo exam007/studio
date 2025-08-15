@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <SidebarHeader>
                         <div className="flex items-center gap-2 p-2 justify-center">
                            <BookOpen className="w-8 h-8 text-sidebar-primary"/>
-                           <h2 className="text-2xl font-headline font-semibold text-sidebar-primary group-data-[collapsible=icon]:hidden">แนวข้อสอบ</h2>
+                           <h2 className="text-2xl font-headline font-semibold text-sidebar-primary group-data-[collapsible=icon]:hidden">แนวข้อสอบ.</h2>
                         </div>
                     </SidebarHeader>
                     <SidebarContent>
