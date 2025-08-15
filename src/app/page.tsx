@@ -91,6 +91,7 @@ export default function LoginPage() {
                     className: "bg-green-100 dark:bg-green-900",
                 });
                 router.push('/dashboard');
+                return; // <<< FIX: Stop execution here to prevent signout
             } else {
                 // 2. User is not registered, check for pending requests
                 const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
@@ -227,3 +228,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    
