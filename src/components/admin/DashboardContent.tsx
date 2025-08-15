@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import {
   FileUp, Users, HelpCircle, Upload, ShieldCheck,
-  MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle
+  MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle, Check, X, UserCheck
 } from "lucide-react";
 import type { Question, Option } from '@/app/admin/edit-exam/[id]/page';
 
@@ -39,6 +39,13 @@ export type UserProfile = {
     name: string;
     avatar?: string;
 }
+
+export type PendingRequest = {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL: string;
+};
 
 const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, handleDeleteExam, fileInputRef, handleFileChange, handleUploadClick, handleCreateNewExam, handleManagePermissions }: any) => (
     <Card>
@@ -287,6 +294,60 @@ const UsersTabContent = ({ users, isAddUserDialogOpen, setIsAddUserDialogOpen, h
     );
 };
 
+
+const RequestsTabContent = ({ pendingRequests, handleApproveRequest, handleRejectRequest }: any) => (
+    <Card>
+        <CardHeader>
+            <CardTitle>คำขออนุมัติเข้าสู่ระบบ</CardTitle>
+            <CardDescription>
+                จัดการคำขอของผู้ใช้ใหม่ที่ต้องการเข้าถึงระบบ
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Avatar</TableHead>
+                        <TableHead>ชื่อ</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead className="text-right">การดำเนินการ</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {pendingRequests.length > 0 ? (
+                        pendingRequests.map((req: PendingRequest) => (
+                        <TableRow key={req.uid}>
+                            <TableCell>
+                                <Avatar>
+                                    <AvatarImage src={req.photoURL} data-ai-hint="user avatar" />
+                                    <AvatarFallback>{req.displayName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            </TableCell>
+                            <TableCell>{req.displayName}</TableCell>
+                            <TableCell>{req.email}</TableCell>
+                            <TableCell className="text-right space-x-2">
+                                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleRejectRequest(req.uid)}>
+                                    <X className="mr-1 h-4 w-4" /> ปฏิเสธ
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => handleApproveRequest(req)}>
+                                   <Check className="mr-1 h-4 w-4" /> อนุมัติ
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={4} className="h-24 text-center">
+                                ไม่มีคำขอที่รอการอนุมัติ
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </CardContent>
+    </Card>
+);
+
 export function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -297,6 +358,8 @@ export function DashboardContent() {
   
   const [exams, setExams] = useState<Exam[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+
 
   // State for editing exam
   const [examToEdit, setExamToEdit] = useState<Exam | null>(null);
@@ -309,12 +372,14 @@ export function DashboardContent() {
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
 
-  // Load data from localStorage on initial render
-  useEffect(() => {
+  const refreshDataFromLocalStorage = () => {
     try {
         const storedExams: Exam[] = [];
         let storedUsers: UserProfile[] = [];
         let hasUsers = false;
+
+        const storedRequests = localStorage.getItem("pending_requests");
+        setPendingRequests(storedRequests ? JSON.parse(storedRequests) : []);
 
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -329,7 +394,6 @@ export function DashboardContent() {
             }
         }
         
-        // If no users found in localStorage, create a default user
         if (!hasUsers) {
             const defaultUser: UserProfile = {
                 id: uuidv4(),
@@ -339,10 +403,6 @@ export function DashboardContent() {
             };
             localStorage.setItem(`user_${defaultUser.id}`, JSON.stringify(defaultUser));
             storedUsers = [defaultUser];
-            toast({
-              title: "สร้างผู้ใช้เริ่มต้น",
-              description: `เพิ่ม ${defaultUser.email} เข้าระบบแล้ว`,
-            });
         }
         
         setExams(storedExams);
@@ -351,7 +411,13 @@ export function DashboardContent() {
         console.error("Could not load data from localStorage", error);
         toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถโหลดข้อมูลที่บันทึกไว้ได้", variant: "destructive" });
     }
-  }, [toast]);
+  };
+
+
+  // Load data from localStorage on initial render
+  useEffect(() => {
+    refreshDataFromLocalStorage();
+  }, []);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -560,6 +626,42 @@ export function DashboardContent() {
       });
   }
 
+  const handleApproveRequest = (request: PendingRequest) => {
+    // Add to users list
+    const newUser: UserProfile = {
+      id: request.uid,
+      name: request.displayName,
+      email: request.email,
+      avatar: request.photoURL,
+    };
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    localStorage.setItem(`user_${newUser.id}`, JSON.stringify(newUser));
+
+    // Remove from pending list
+    handleRejectRequest(request.uid, false); // silent rejection
+    toast({
+        title: "อนุมัติสำเร็จ",
+        description: `ผู้ใช้ ${request.displayName} ได้รับการอนุมัติแล้ว`,
+    });
+  };
+
+  const handleRejectRequest = (uid: string, showToast = true) => {
+    const updatedRequests = pendingRequests.filter(req => req.uid !== uid);
+    setPendingRequests(updatedRequests);
+    localStorage.setItem('pending_requests', JSON.stringify(updatedRequests));
+     // Manually trigger storage event for other tabs like the sidebar
+    window.dispatchEvent(new Event('storage'));
+    if (showToast) {
+        toast({
+            title: "ปฏิเสธคำขอ",
+            description: "คำขอของผู้ใช้ถูกปฏิเสธแล้ว",
+            variant: "destructive"
+        });
+    }
+  };
+
+
   const renderContent = () => {
     switch (currentTab) {
         case 'exams':
@@ -585,6 +687,12 @@ export function DashboardContent() {
                 newUserEmail={newUserEmail}
                 setNewUserEmail={setNewUserEmail}
                 handleDeleteUser={handleDeleteUser}
+                />;
+        case 'requests':
+            return <RequestsTabContent 
+                pendingRequests={pendingRequests}
+                handleApproveRequest={handleApproveRequest}
+                handleRejectRequest={handleRejectRequest}
                 />;
         default:
             return <ExamsTabContent 
@@ -658,5 +766,3 @@ export function DashboardContent() {
     </div>
   );
 }
-
-    

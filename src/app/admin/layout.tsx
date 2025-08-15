@@ -2,13 +2,23 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutDashboard, LogOut, FileUp, Users, Eye, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, LogOut, FileUp, Users, Eye, UserCheck } from "lucide-react";
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+
+type PendingRequest = {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL: string;
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const [pendingCount, setPendingCount] = useState(0);
     
     const isActive = (path: string, tab?: string) => {
         const currentTab = searchParams.get('tab');
@@ -16,10 +26,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             if (tab) {
                  return currentTab === tab;
             }
+            // Default to 'exams' if no tab is selected
             return !currentTab || currentTab === 'exams';
         }
         return pathname.startsWith(path) && !tab;
     };
+
+     useEffect(() => {
+        const checkPendingRequests = () => {
+            const storedRequests = localStorage.getItem("pending_requests");
+            if (storedRequests) {
+                const requests: PendingRequest[] = JSON.parse(storedRequests);
+                setPendingCount(requests.length);
+            } else {
+                setPendingCount(0);
+            }
+        };
+
+        checkPendingRequests();
+        
+        // Listen for storage changes to update the badge in real-time
+        window.addEventListener('storage', checkPendingRequests);
+
+        return () => {
+            window.removeEventListener('storage', checkPendingRequests);
+        };
+    }, []);
+
 
     return (
         <SidebarProvider>
@@ -46,6 +79,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     <SidebarMenuButton tooltip="จัดการผู้ใช้" size="lg" isActive={isActive('/admin/dashboard', 'users')}>
                                         <Users />
                                         <span>จัดการผู้ใช้</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <Link href="/admin/dashboard?tab=requests" passHref>
+                                    <SidebarMenuButton tooltip="คำขออนุมัติ" size="lg" isActive={isActive('/admin/dashboard', 'requests')}>
+                                        <div className="relative">
+                                            <UserCheck />
+                                            {pendingCount > 0 && (
+                                                <Badge className="absolute -right-2 -top-1 h-5 w-5 justify-center p-0">{pendingCount}</Badge>
+                                            )}
+                                        </div>
+                                        <span>คำขออนุมัติ</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>

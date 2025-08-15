@@ -24,6 +24,14 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
   );
 
+type PendingRequest = {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL: string;
+};
+
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -75,6 +83,7 @@ export default function LoginPage() {
         const user = result.user;
 
         if (user && user.email) {
+            // 1. Check if user is already registered
             if(isUserRegistered(user.email)) {
                  toast({
                     title: "เข้าสู่ระบบด้วย Google สำเร็จ",
@@ -83,11 +92,35 @@ export default function LoginPage() {
                 });
                 router.push('/dashboard');
             } else {
-                 toast({
-                    title: "การเข้าถึงถูกปฏิเสธ",
-                    description: "บัญชีของคุณยังไม่ได้รับการลงทะเบียนโดยผู้ดูแลระบบ",
-                    variant: "destructive",
-                });
+                // 2. User is not registered, check for pending requests
+                const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
+                const existingRequest = pendingRequests.find(req => req.email === user.email);
+
+                if (existingRequest) {
+                    // 2a. Request already exists
+                    toast({
+                        title: "กำลังรอการอนุมัติ",
+                        description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
+                        variant: "default",
+                    });
+                } else {
+                    // 2b. No pending request, create one
+                    const newRequest: PendingRequest = {
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName || 'N/A',
+                        photoURL: user.photoURL || `https://placehold.co/40x40.png?text=${user.email.charAt(0).toUpperCase()}`
+                    };
+                    pendingRequests.push(newRequest);
+                    localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
+                     // Manually trigger storage event for other tabs
+                    window.dispatchEvent(new Event('storage'));
+                    toast({
+                        title: "ส่งคำขอสำเร็จ",
+                        description: "คำขอของคุณถูกส่งไปให้ผู้ดูแลระบบเพื่ออนุมัติแล้ว",
+                        variant: "default"
+                    });
+                }
                 await auth.signOut();
             }
         } else {
