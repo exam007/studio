@@ -95,7 +95,7 @@ export default function LoginPage() {
                     className: "bg-green-100 dark:bg-green-900",
                 });
                 router.push('/dashboard');
-                // FIX: Stop execution here to prevent signout for existing users
+                // **CRITICAL FIX**: Stop execution here to prevent signout for existing users
                 return; 
             } 
             
@@ -111,15 +111,26 @@ export default function LoginPage() {
                     variant: "default",
                 });
             } else {
-                // 2b. This user is neither registered nor pending. Show error toast.
+                // 2b. This is a new, unregistered user. Create a pending request.
+                const newRequest: PendingRequest = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || "No Name",
+                    photoURL: user.photoURL || "",
+                };
+                pendingRequests.push(newRequest);
+                localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
+                // Manually trigger storage event so the admin sidebar badge updates in other open tabs
+                window.dispatchEvent(new Event("storage"));
+                
                  toast({
-                    title: "การเข้าถึงถูกปฏิเสธ",
-                    description: "ขออภัย คุณไม่มีชื่ออยู่ในระบบ โปรดติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์เข้าใช้งาน",
-                    variant: "destructive",
+                    title: "ส่งคำขอสำเร็จ",
+                    description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
+                    variant: "default",
                     duration: 9000,
                 });
             }
-            // Sign out because they are not an approved user.
+            // Sign out because they are not an approved user yet.
             await auth.signOut();
             
         } else {
@@ -230,3 +241,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    
