@@ -165,7 +165,11 @@ export default function LoginPage() {
         <CardContent className="px-6 pb-6">
             <div className="flex flex-col space-y-4">
                 <Button onClick={handleGoogleLogin} variant="outline" className="h-11 text-base" disabled={isGoogleLoading}>
-                    <GoogleIcon className="mr-2"/>
+                    {isGoogleLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <GoogleIcon className="mr-2"/>
+                    )}
                     เข้าสู่ระบบด้วย Google
                 </Button>
                 
@@ -225,5 +229,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
-    
