@@ -65,9 +65,13 @@ export default function LoginPage() {
         if (key && key.startsWith("user_")) {
             const item = localStorage.getItem(key);
             if(item){
-                const storedUser = JSON.parse(item);
-                if (storedUser.email && storedUser.email.toLowerCase() === email.toLowerCase()) {
-                    return true;
+                try {
+                    const storedUser = JSON.parse(item);
+                    if (storedUser.email && storedUser.email.toLowerCase() === email.toLowerCase()) {
+                        return true;
+                    }
+                } catch(e) {
+                    console.error("Failed to parse user from localStorage", e);
                 }
             }
         }
@@ -92,30 +96,31 @@ export default function LoginPage() {
                 });
                 router.push('/dashboard');
                 return; // FIX: Stop execution here to prevent signout for existing users
-            } else {
-                // 2. User is not registered, check for pending requests
-                const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
-                const existingRequest = pendingRequests.find(req => req.email === user.email);
+            } 
+            
+            // 2. User is not registered, check for pending requests
+            const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
+            const existingRequest = pendingRequests.find(req => req.email === user.email);
 
-                if (existingRequest) {
-                    // 2a. Request already exists
-                    toast({
-                        title: "กำลังรอการอนุมัติ",
-                        description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
-                        variant: "default",
-                    });
-                } else {
-                    // 2b. This user is neither registered nor pending. Show error toast.
-                     toast({
-                        title: "การเข้าถึงถูกปฏิเสธ",
-                        description: "ขออภัย คุณไม่มีชื่ออยู่ในระบบ โปรดติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์เข้าใช้งาน",
-                        variant: "destructive",
-                        duration: 9000,
-                    });
-                }
-                // Sign out because they are not an approved user.
-                await auth.signOut();
+            if (existingRequest) {
+                // 2a. Request already exists
+                toast({
+                    title: "กำลังรอการอนุมัติ",
+                    description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
+                    variant: "default",
+                });
+            } else {
+                // 2b. This user is neither registered nor pending. Show error toast.
+                 toast({
+                    title: "การเข้าถึงถูกปฏิเสธ",
+                    description: "ขออภัย คุณไม่มีชื่ออยู่ในระบบ โปรดติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์เข้าใช้งาน",
+                    variant: "destructive",
+                    duration: 9000,
+                });
             }
+            // Sign out because they are not an approved user.
+            await auth.signOut();
+            
         } else {
              throw new Error("ไม่สามารถรับข้อมูลผู้ใช้จาก Google ได้");
         }
