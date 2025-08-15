@@ -95,7 +95,8 @@ export default function LoginPage() {
                     className: "bg-green-100 dark:bg-green-900",
                 });
                 router.push('/dashboard');
-                return; // FIX: Stop execution here to prevent signout for existing users
+                // FIX: Stop execution here to prevent signout for existing users
+                return; 
             } 
             
             // 2. User is not registered, check for pending requests
