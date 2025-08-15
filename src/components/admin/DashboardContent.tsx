@@ -23,6 +23,8 @@ import {
   FileUp, Users, HelpCircle, Upload, ShieldCheck,
   MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle
 } from "lucide-react";
+import type { Question, Option } from '@/app/admin/edit-exam/[id]/page';
+
 
 export type Exam = {
     id: string;
@@ -367,20 +369,42 @@ export function DashboardContent() {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             
+            // Start from the second row (index 1) to skip header
             const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
             
             const newExamId = uuidv4();
+
+            const questions: Question[] = jsonData.map((row: any): Question => {
+                const options: Option[] = [
+                    { id: uuidv4(), text: String(row[2] || '') },
+                    { id: uuidv4(), text: String(row[3] || '') },
+                    { id: uuidv4(), text: String(row[4] || '') },
+                    { id: uuidv4(), text: String(row[5] || '') },
+                ].filter(opt => opt.text);
+
+                // Find the correct option object to get its id
+                const correctOption = options.find(opt => opt.text === String(row[6] || ''));
+
+                return {
+                    id: uuidv4(),
+                    type: 'mcq', // Assuming all questions from excel are mcq
+                    text: String(row[1] || ''),
+                    options: options,
+                    correctAnswer: correctOption ? correctOption.id : ''
+                };
+            });
+
             const newExam: Exam = {
               id: newExamId,
               name: file.name.replace(/\.[^/.]+$/, ""), // Use filename as exam name
-              questionCount: jsonData.length,
+              questionCount: questions.length,
               timeInMinutes: 30 // Default time
             };
             
             const updatedExams = [...exams, newExam];
             setExams(updatedExams);
             localStorage.setItem(`exam_details_${newExam.id}`, JSON.stringify(newExam));
-            localStorage.setItem(`exam_questions_${newExam.id}`, JSON.stringify(jsonData));
+            localStorage.setItem(`exam_questions_${newExam.id}`, JSON.stringify(questions));
 
             toast({
               title: "อัปโหลดไฟล์สำเร็จ",
