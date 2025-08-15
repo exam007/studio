@@ -1,9 +1,10 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'แนวข้อสอบ.',
+  title: 'แนวข้อสอบ',
   description: 'Create and take exams with ease.',
 };
 
