@@ -84,7 +84,7 @@ export default function LoginPage() {
     setIsAdminLoading(true);
     try {
         await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-        // onAuthStateChanged in AuthContext will handle the redirect
+        // onAuthStateChanged in AuthContext will handle the redirect via useEffect
     } catch(error: any) {
         console.error(error);
         toast({
@@ -180,3 +180,4 @@ export default function LoginPage() {
         </main>
     );
 }
+
