@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
-import { BookOpen, Loader2, Shield } from "lucide-react";
+import { AlertCircle, BookOpen, Loader2, Shield } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -55,6 +56,7 @@ export default function LoginPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
@@ -67,22 +69,23 @@ export default function LoginPage() {
         if (isAdmin) {
           router.push('/admin/dashboard');
         } else {
-            // This is for users who are already logged in and registered.
             const isRegistered = isUserRegistered(user.email);
             if (isRegistered) {
                 router.push('/dashboard');
             }
-            // If user is logged in but not registered, they stay on this page
-            // until they are approved (after manual refresh or next login)
         }
       }
       setIsCheckingUser(false);
     }
   }, [user, loading, router]);
 
+  const handleLoginAttempt = () => {
+    setLoginError(null);
+    setIsLoading(true);
+  }
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
+    handleLoginAttempt();
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -90,27 +93,14 @@ export default function LoginPage() {
       
       const isRegistered = isUserRegistered(loggedInUser.email);
       
-      if (isRegistered) {
-        // This will be handled by the useEffect to prevent race conditions
-        // The effect will see the new user and redirect to /dashboard
-      } else {
-        // New user scenario
-        toast({
-            title: "ไม่มีชื่อในระบบ",
-            description: "บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล",
-            variant: "destructive",
-            duration: 9000,
-        });
-        // We must sign out the user if they are not on the list.
+      if (!isRegistered) {
+        setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล");
         await signOut(auth);
       }
+      // If registered, the useEffect will handle the redirect.
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
-            toast({
-                title: "เกิดข้อผิดพลาดในการล็อกอิน",
-                description: `ไม่สามารถเข้าสู่ระบบด้วย Google ได้: ${error.message}`,
-                variant: "destructive",
-            });
+            setLoginError(`เกิดข้อผิดพลาดในการล็อกอิน: ${error.message}`);
         }
     } finally {
         setIsLoading(false);
@@ -120,20 +110,20 @@ export default function LoginPage() {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adminEmail || !adminPassword) {
-        toast({ title: "ข้อมูลไม่ครบถ้วน", description: "กรุณากรอกอีเมลและรหัสผ่าน", variant: "destructive"});
+        setLoginError("กรุณากรอกอีเมลและรหัสผ่าน");
         return;
     }
-    setIsLoading(true);
+    handleLoginAttempt();
     try {
         await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
         // After this, the useEffect hook will handle the redirect.
     } catch(error: any) {
         console.error(error);
-        toast({
-            title: "เข้าสู่ระบบผู้ดูแลล้มเหลว",
-            description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือคุณยังไม่ได้เปิดใช้งานและสร้างบัญชีใน Firebase Console",
-            variant: "destructive",
-        });
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        } else {
+            setLoginError(`เกิดข้อผิดพลาด: ${error.message}`);
+        }
     } finally {
         setIsLoading(false);
     }
@@ -159,9 +149,19 @@ export default function LoginPage() {
                         {showAdminLogin ? 'Admin Login' : 'ยินดีต้อนรับ'}
                     </h2>
                     <p className="text-muted-foreground mt-1">
-                        {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'เข้าสู่ระบบหรือส่งคำขอเข้าใช้งาน'}
+                        {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'เข้าสู่ระบบเพื่อทำข้อสอบ'}
                     </p>
                 </div>
+
+                {loginError && (
+                     <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>เกิดข้อผิดพลาด</AlertTitle>
+                        <AlertDescription>
+                            {loginError}
+                        </AlertDescription>
+                    </Alert>
+                )}
 
                 <div className={cn("transition-opacity duration-300", showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
                     <div className="flex flex-col space-y-4">
@@ -212,7 +212,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="mt-6 text-center">
-                        <Button variant="link" className="text-muted-foreground" onClick={() => setShowAdminLogin(!showAdminLogin)}>
+                        <Button variant="link" className="text-muted-foreground" onClick={() => { setShowAdminLogin(!showAdminLogin); setLoginError(null); }}>
                         {showAdminLogin ? "กลับสู่หน้าเข้าสู่ระบบทั่วไป" : "สำหรับผู้ดูแลระบบ"}
                         </Button>
                 </div>
