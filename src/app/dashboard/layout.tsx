@@ -2,10 +2,47 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, LogOut, BookOpen, User, LayoutDashboard } from "lucide-react";
+import { Home, LogOut, BookOpen, User, LayoutDashboard, Loader2 } from "lucide-react";
 import Link from 'next/link';
+import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState<FirebaseUser | null>(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            if (currentUser) {
+                setUser(currentUser);
+                setIsLoading(false);
+            } else {
+                router.push('/');
+            }
+        });
+        
+        return () => unsubscribe();
+    }, [router]);
+
+    const handleLogout = async () => {
+        await signOut(auth);
+    };
+
+    if (isLoading) {
+         return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="text-muted-foreground">กำลังโหลดข้อมูลผู้ใช้...</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <SidebarProvider>
             <div className="flex min-h-screen">
@@ -20,7 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <Link href="/dashboard" passHref>
-                                    <SidebarMenuButton tooltip="หน้าหลัก" size="lg">
+                                    <SidebarMenuButton tooltip="หน้าหลัก" size="lg" isActive>
                                         <Home />
                                         <span>หน้าหลัก</span>
                                     </SidebarMenuButton>
@@ -39,12 +76,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <SidebarFooter>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <Link href="/" passHref>
-                                    <SidebarMenuButton tooltip="Logout" size="lg">
-                                        <LogOut />
-                                        <span>Logout</span>
-                                    </SidebarMenuButton>
-                                </Link>
+                                <SidebarMenuButton tooltip="Logout" size="lg" onClick={handleLogout}>
+                                    <LogOut />
+                                    <span>Logout</span>
+                                </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarFooter>
@@ -53,10 +88,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <header className="flex items-center justify-between p-4 border-b">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
-                            <span className="font-medium text-sm hidden sm:inline">Welcome, User!</span>
+                            <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
                             <Avatar className="h-9 w-9">
-                                <AvatarImage src="https://placehold.co/40x40" alt="User avatar" data-ai-hint="user avatar" />
-                                <AvatarFallback>U</AvatarFallback>
+                                <AvatarImage src={user?.photoURL || "https://placehold.co/40x40"} alt="User avatar" data-ai-hint="user avatar" />
+                                <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                             </Avatar>
                         </div>
                     </header>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BookOpen, LogIn, Terminal, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -39,7 +39,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading state
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user && isUserRegistered(user.email!)) {
+            // User is logged in and registered, go to dashboard
+            router.push('/dashboard');
+        } else {
+             // User is not logged in or not registered, stay on login page
+            setIsLoading(false);
+        }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [router]);
 
 
   const handleAdminLogin = (e: React.FormEvent) => {
@@ -52,7 +69,9 @@ export default function LoginPage() {
         description: "กำลังนำคุณไปยังหน้าแดชบอร์ดผู้ดูแลระบบ...",
         className: "bg-green-100 dark:bg-green-900",
       });
-      router.push('/admin/dashboard');
+      // A simple mock login for admin, in real app, this should be secure
+      // Forcing a navigation, as admin doesn't use Firebase Auth in this mock
+      router.push('/admin/dashboard'); 
     } else {
       setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     }
@@ -87,57 +106,45 @@ export default function LoginPage() {
         const user = result.user;
 
         if (user && user.email) {
-            // 1. Check if user is already registered
-            if(isUserRegistered(user.email)) {
-                 toast({
-                    title: "เข้าสู่ระบบด้วย Google สำเร็จ",
-                    description: "กำลังนำคุณไปยังหน้าแดชบอร์ด...",
-                    className: "bg-green-100 dark:bg-green-900",
-                });
-                router.push('/dashboard');
-                // **CRITICAL FIX**: Stop execution here to prevent signout for existing users
-                return; 
-            } 
-            
-            // 2. User is not registered, check for pending requests
-            const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
-            const existingRequest = pendingRequests.find(req => req.email === user.email);
+            // After signInWithPopup, onAuthStateChanged will trigger.
+            // We just need to handle the logic for unregistered users here.
+            if(!isUserRegistered(user.email)) {
+                 const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
+                const existingRequest = pendingRequests.find(req => req.email === user.email);
 
-            if (existingRequest) {
-                // 2a. Request already exists
-                toast({
-                    title: "กำลังรอการอนุมัติ",
-                    description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
-                    variant: "default",
-                });
-            } else {
-                // 2b. This is a new, unregistered user. Create a pending request.
-                const newRequest: PendingRequest = {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName || "No Name",
-                    photoURL: user.photoURL || "",
-                };
-                pendingRequests.push(newRequest);
-                localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
-                // Manually trigger storage event so the admin sidebar badge updates in other open tabs
-                window.dispatchEvent(new Event("storage"));
-                
-                 toast({
-                    title: "ส่งคำขอสำเร็จ",
-                    description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
-                    variant: "default",
-                    duration: 9000,
-                });
+                if (existingRequest) {
+                    toast({
+                        title: "กำลังรอการอนุมัติ",
+                        description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
+                        variant: "default",
+                    });
+                } else {
+                    const newRequest: PendingRequest = {
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName || "No Name",
+                        photoURL: user.photoURL || "",
+                    };
+                    pendingRequests.push(newRequest);
+                    localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
+                    window.dispatchEvent(new Event("storage"));
+                    
+                     toast({
+                        title: "ส่งคำขอสำเร็จ",
+                        description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
+                        variant: "default",
+                        duration: 9000,
+                    });
+                }
+                // Sign out because they are not an approved user yet.
+                await signOut(auth);
             }
-            // Sign out because they are not an approved user yet.
-            await auth.signOut();
-            
+            // If user is registered, onAuthStateChanged will handle the redirect.
+            // No need to do anything here.
         } else {
              throw new Error("ไม่สามารถรับข้อมูลผู้ใช้จาก Google ได้");
         }
     } catch (error: any) {
-        // Don't show toast for user closing the popup
         if (error.code !== 'auth/popup-closed-by-user') {
             toast({
                 title: "เกิดข้อผิดพลาดในการล็อกอิน",
@@ -150,13 +157,13 @@ export default function LoginPage() {
     }
   };
 
-    if (isGoogleLoading) {
+    if (isLoading) {
         return (
             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Loader2 className="w-16 h-16 animate-spin text-primary"/>
-                    <h1 className="text-2xl font-semibold text-foreground">กำลังลงชื่อเข้าใช้...</h1>
-                    <p className="text-muted-foreground">โปรดรอสักครู่ ระบบกำลังตรวจสอบข้อมูลของคุณ</p>
+                    <h1 className="text-2xl font-semibold text-foreground">กำลังโหลด...</h1>
+                    <p className="text-muted-foreground">กรุณารอสักครู่</p>
                 </div>
             </main>
         )

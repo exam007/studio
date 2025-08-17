@@ -2,11 +2,13 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutDashboard, LogOut, FileUp, Users, Eye, UserCheck } from "lucide-react";
+import { LayoutDashboard, LogOut, FileUp, Users, Eye, UserCheck, Loader2 } from "lucide-react";
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 type PendingRequest = {
     uid: string;
@@ -17,9 +19,32 @@ type PendingRequest = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
     const searchParams = useSearchParams();
     const [pendingCount, setPendingCount] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
     
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // Not logged in, redirect to login page
+                router.push('/');
+            } else {
+                 // User is logged in, stop loading
+                setIsLoading(false);
+            }
+        });
+        
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, [router]);
+
+    const handleLogout = async () => {
+        await signOut(auth);
+        // router.push('/'); // onAuthStateChanged will handle the redirect
+    };
+
+
     const isActive = (path: string, tab?: string) => {
         const currentTab = searchParams.get('tab');
         if (path === '/admin/dashboard') {
@@ -53,6 +78,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         };
     }, []);
 
+    if (isLoading) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="text-muted-foreground">กำลังตรวจสอบสิทธิ์...</p>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <SidebarProvider>
@@ -108,12 +143,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <SidebarFooter>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <Link href="/" passHref>
-                                    <SidebarMenuButton tooltip="Logout" size="lg">
-                                        <LogOut />
-                                        <span>Logout</span>
-                                    </SidebarMenuButton>
-                                </Link>
+                                <SidebarMenuButton tooltip="Logout" size="lg" onClick={handleLogout}>
+                                    <LogOut />
+                                    <span>Logout</span>
+                                </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarFooter>
