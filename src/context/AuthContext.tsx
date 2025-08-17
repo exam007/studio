@@ -75,6 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             };
             pendingRequests.push(newRequest);
             localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
+            // Dispatch storage event to notify other tabs/components like the admin sidebar
             window.dispatchEvent(new Event("storage"));
             
             toast({
@@ -104,5 +105,3 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   return useContext(AuthContext);
 };
-
-    
