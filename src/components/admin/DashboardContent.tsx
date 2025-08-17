@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useEffect, useRef, useState } from "react";
@@ -31,6 +32,7 @@ export type Exam = {
     name: string;
     questionCount: number;
     timeInMinutes: number;
+    year: number;
 }
 
 export type UserProfile = {
@@ -97,6 +99,7 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
                 <TableHead>ชื่อข้อสอบ</TableHead>
                 <TableHead>จำนวนคำถาม</TableHead>
                 <TableHead>เวลา (นาที)</TableHead>
+                 <TableHead>ปี</TableHead>
                 <TableHead className="text-right">จัดการ</TableHead>
               </TableRow>
             </TableHeader>
@@ -107,6 +110,7 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
                   <TableCell>{exam.name}</TableCell>
                   <TableCell>{exam.questionCount}</TableCell>
                   <TableCell>{exam.timeInMinutes}</TableCell>
+                  <TableCell>{exam.year}</TableCell>
                   <TableCell className="text-right">
                     
                     <DropdownMenu>
@@ -160,7 +164,7 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
                 </TableRow>
               )) : (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                         ยังไม่มีข้อสอบในระบบ
                     </TableCell>
                 </TableRow>
@@ -365,6 +369,7 @@ export function DashboardContent() {
   const [examToEdit, setExamToEdit] = useState<Exam | null>(null);
   const [newExamName, setNewExamName] = useState("");
   const [newExamTime, setNewExamTime] = useState("");
+  const [newExamYear, setNewExamYear] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // State for adding a new user
@@ -387,6 +392,8 @@ export function DashboardContent() {
                 const exam = JSON.parse(localStorage.getItem(key)!);
                 const questions = JSON.parse(localStorage.getItem(`exam_questions_${exam.id}`) || '[]');
                 exam.questionCount = questions.length;
+                // Add default year for backward compatibility
+                exam.year = exam.year || new Date().getFullYear() + 543;
                 storedExams.push(exam);
             } else if (key?.startsWith('user_')) {
                 hasUsers = true;
@@ -464,7 +471,8 @@ export function DashboardContent() {
               id: newExamId,
               name: file.name.replace(/\.[^/.]+$/, ""), // Use filename as exam name
               questionCount: questions.length,
-              timeInMinutes: 30 // Default time
+              timeInMinutes: 30, // Default time
+              year: new Date().getFullYear() + 543,
             };
             
             const updatedExams = [...exams, newExam];
@@ -505,6 +513,7 @@ export function DashboardContent() {
     setExamToEdit(exam);
     setNewExamName(exam.name);
     setNewExamTime(String(exam.timeInMinutes));
+    setNewExamYear(String(exam.year));
     setIsEditDialogOpen(true);
   }
 
@@ -512,16 +521,18 @@ export function DashboardContent() {
     if(!examToEdit || !newExamName.trim()) return;
 
     const time = parseInt(newExamTime, 10);
+    const year = parseInt(newExamYear, 10);
+
     if(isNaN(time) || time <= 0) {
-        toast({
-            title: "เวลาไม่ถูกต้อง",
-            description: "กรุณาใส่เวลาเป็นตัวเลขที่มากกว่า 0",
-            variant: "destructive"
-        })
+        toast({ title: "เวลาไม่ถูกต้อง", description: "กรุณาใส่เวลาเป็นตัวเลขที่มากกว่า 0", variant: "destructive" });
+        return;
+    }
+    if(isNaN(year) || year < 2500) {
+        toast({ title: "ปีไม่ถูกต้อง", description: "กรุณาใส่ปี พ.ศ. ที่ถูกต้อง", variant: "destructive" });
         return;
     }
     
-    const updatedExam = { ...examToEdit, name: newExamName.trim(), timeInMinutes: time };
+    const updatedExam = { ...examToEdit, name: newExamName.trim(), timeInMinutes: time, year: year };
     const updatedExams = exams.map(exam => 
         exam.id === examToEdit.id ? updatedExam : exam
     );
@@ -535,8 +546,6 @@ export function DashboardContent() {
     
     setIsEditDialogOpen(false);
     setExamToEdit(null);
-    setNewExamName("");
-    setNewExamTime("");
   }
   
   const handleEditQuestions = (examId: string) => {
@@ -554,6 +563,7 @@ export function DashboardContent() {
       name: `ข้อสอบใหม่ ${exams.length + 1}`,
       questionCount: 0,
       timeInMinutes: 20, // Default time
+      year: new Date().getFullYear() + 543,
     };
     const updatedExams = [...exams, newExam];
     setExams(updatedExams);
@@ -725,7 +735,7 @@ export function DashboardContent() {
           <DialogHeader>
             <DialogTitle>แก้ไขข้อมูลข้อสอบ</DialogTitle>
             <DialogDescription>
-              เปลี่ยนชื่อและเวลาในการทำข้อสอบสำหรับรหัส {examToEdit?.id}. กดบันทึกเพื่อยืนยัน
+              เปลี่ยนชื่อ, เวลา และปีของข้อสอบสำหรับรหัส {examToEdit?.id}.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -749,6 +759,18 @@ export function DashboardContent() {
                 type="number"
                 value={newExamTime}
                 onChange={(e) => setNewExamTime(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="year" className="text-right">
+                ปี (พ.ศ.)
+              </Label>
+              <Input
+                id="year"
+                type="number"
+                value={newExamYear}
+                onChange={(e) => setNewExamYear(e.target.value)}
                 className="col-span-3"
               />
             </div>
