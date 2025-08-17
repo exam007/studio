@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { BookOpen, Loader2, Shield } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -26,8 +26,8 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const isUserRegistered = (email: string | null): boolean => {
     if (typeof window === 'undefined' || !email) return false;
 
-    // Admin is always considered registered in this context
-    if (email === 'narongtorn.s@attorney285.co.th') return true;
+    // Admin is not a registered user in this context, they have their own login
+    if (email === 'narongtorn.s@attorney285.co.th') return false;
 
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -58,49 +58,34 @@ export default function LoginPage() {
 
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   useEffect(() => {
-    if (loading) {
-      return; // Wait until user status is resolved
-    }
-
-    if (user) {
-      const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
-      const isRegistered = isUserRegistered(user.email);
-
-      if (isAdmin) {
-        router.push('/admin/dashboard');
-      } else if (isRegistered) {
-        router.push('/dashboard');
-      } else {
-        // This is a new user who just signed in with Google
-        // Add them to pending requests if they aren't there already.
-        const pendingRequests = JSON.parse(localStorage.getItem("pending_requests") || "[]");
-        const existingRequest = pendingRequests.find((req: any) => req.uid === user.uid);
-
-        if (!existingRequest) {
-            const newRequest = {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName || "No Name",
-                photoURL: user.photoURL || "",
-            };
-            pendingRequests.push(newRequest);
-            localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
-            window.dispatchEvent(new Event("storage"));
-            
-            toast({
-                title: "ส่งคำขอสำเร็จ",
-                description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
-                duration: 9000,
-            });
+    if (!loading) {
+      if (user) {
+        const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
+        if (isAdmin) {
+          router.push('/admin/dashboard');
         } else {
-             toast({
-                title: "กำลังรอการอนุมัติ",
-                description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
-                duration: 9000,
-            });
+            const isRegistered = isUserRegistered(user.email);
+            if (isRegistered) {
+                router.push('/dashboard');
+            } else {
+                // This is a new user who just signed in with Google
+                // but is not on the registered list.
+                toast({
+                    title: "ไม่มีชื่อในระบบ",
+                    description: "บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล",
+                    variant: "destructive",
+                    duration: 9000,
+                });
+                signOut(auth); // Sign out the unauthorized user.
+                setIsCheckingUser(false);
+            }
         }
+      } else {
+        // No user is logged in
+        setIsCheckingUser(false);
       }
     }
   }, [user, loading, router, toast]);
@@ -147,7 +132,7 @@ export default function LoginPage() {
     }
   }
 
-    if (loading) { 
+    if (loading || isCheckingUser) { 
         return (
             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
                 <div className="flex flex-col items-center gap-4 text-center">
