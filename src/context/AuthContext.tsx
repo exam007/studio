@@ -2,8 +2,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -43,16 +44,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRegisteredUser, setIsRegisteredUserState] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setIsRegisteredUserState(isUserRegistered(currentUser?.email || null));
+      const isRegistered = isUserRegistered(currentUser?.email || null);
+      setIsRegisteredUserState(isRegistered);
+
+      if (currentUser && !isRegistered) {
+        const pendingRequests = JSON.parse(localStorage.getItem("pending_requests") || "[]");
+        const existingRequest = pendingRequests.find((req: any) => req.email === currentUser.email);
+
+        if (existingRequest) {
+            toast({
+                title: "กำลังรอการอนุมัติ",
+                description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
+                variant: "default",
+            });
+        } else {
+            const newRequest = {
+                uid: currentUser.uid,
+                email: currentUser.email,
+                displayName: currentUser.displayName || "No Name",
+                photoURL: currentUser.photoURL || "",
+            };
+            pendingRequests.push(newRequest);
+            localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
+            window.dispatchEvent(new Event("storage"));
+            
+            toast({
+                title: "ส่งคำขอสำเร็จ",
+                description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
+                variant: "default",
+                duration: 9000,
+            });
+        }
+        
+        toast({
+            title: "ไม่ได้รับอนุญาต",
+            description: "ขออภัย คุณยังไม่มีชื่ออยู่ในระบบ โปรดรอการอนุมัติจากผู้ดูแล",
+            variant: "destructive"
+        });
+        signOut(auth);
+      }
+      
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const value = {
     user,

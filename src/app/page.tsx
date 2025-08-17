@@ -43,11 +43,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Redirect if user is logged in and registered
-    if (!loading && user && isRegisteredUser) {
+    if (!loading) {
+      setAuthChecked(true);
+      if (user && isRegisteredUser) {
         router.push('/dashboard');
+      }
     }
   }, [user, loading, isRegisteredUser, router]);
 
@@ -72,53 +75,8 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        const result = await signInWithPopup(auth, provider);
-        const loggedInUser = result.user;
-
-        if (!loggedInUser || !loggedInUser.email) {
-            throw new Error("ไม่สามารถรับข้อมูลผู้ใช้จาก Google ได้");
-        }
-        
-        // The useEffect hook will handle redirection for registered users.
-        // We now check if the user is NOT registered to handle the pending request logic.
-        const isRegistered = isRegisteredUser; // use the state from context which is already calculated
-
-        if (!isRegistered) {
-            const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
-            const existingRequest = pendingRequests.find(req => req.email === loggedInUser.email);
-
-            if (existingRequest) {
-                toast({
-                    title: "กำลังรอการอนุมัติ",
-                    description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
-                    variant: "default",
-                });
-            } else {
-                const newRequest: PendingRequest = {
-                    uid: loggedInUser.uid,
-                    email: loggedInUser.email,
-                    displayName: loggedInUser.displayName || "No Name",
-                    photoURL: loggedInUser.photoURL || "",
-                };
-                pendingRequests.push(newRequest);
-                localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
-                window.dispatchEvent(new Event("storage"));
-                
-                toast({
-                    title: "ส่งคำขอสำเร็จ",
-                    description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
-                    variant: "default",
-                    duration: 9000,
-                });
-            }
-            await signOut(auth);
-            toast({
-                title: "ไม่ได้รับอนุญาต",
-                description: "ขออภัย คุณยังไม่มีชื่ออยู่ในระบบ โปรดรอการอนุมัติจากผู้ดูแล",
-                variant: "destructive"
-            });
-        }
-
+      const result = await signInWithPopup(auth, provider);
+      // AuthContext's onAuthStateChanged will handle the rest.
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             toast({
@@ -132,7 +90,7 @@ export default function LoginPage() {
     }
   };
 
-    if (loading) {
+    if (loading || !authChecked) {
         return (
             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
                 <div className="flex flex-col items-center gap-4 text-center">
@@ -144,94 +102,84 @@ export default function LoginPage() {
         )
     }
     
-    // Don't render login page if user is logged in and registered, let useEffect redirect
-    if (user && isRegisteredUser) {
-        return (
-             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
-                <div className="flex flex-col items-center gap-4 text-center">
-                    <Loader2 className="w-16 h-16 animate-spin text-primary"/>
-                    <h1 className="text-2xl font-semibold text-foreground">กำลังเข้าสู่ระบบ...</h1>
+    // Auth has been checked, but user is not registered or not logged in.
+    // Show the login page.
+    return (
+        <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
+          <Card className="w-full max-w-sm shadow-2xl backdrop-blur-sm bg-card/80">
+            <CardHeader className="text-center">
+                <div className="flex justify-center items-center mb-4">
+                    <div className="p-4 bg-primary/20 rounded-full">
+                        <BookOpen className="w-12 h-12 text-primary" />
+                    </div>
                 </div>
-            </main>
-        );
-    }
-
-  return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
-      <Card className="w-full max-w-sm shadow-2xl backdrop-blur-sm bg-card/80">
-        <CardHeader className="text-center">
-            <div className="flex justify-center items-center mb-4">
-                <div className="p-4 bg-primary/20 rounded-full">
-                    <BookOpen className="w-12 h-12 text-primary" />
-                </div>
-            </div>
-          <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
-          <CardDescription>เข้าสู่ระบบเพื่อทำข้อสอบ หรือจัดการระบบ</CardDescription>
-        </CardHeader>
-        <CardContent className="px-6 pb-6">
-            <div className="flex flex-col space-y-4">
-                <Button onClick={handleGoogleLogin} variant="outline" className="h-11 text-base" disabled={isGoogleLoading}>
-                    {isGoogleLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <GoogleIcon className="mr-2"/>
-                    )}
-                    เข้าสู่ระบบด้วย Google
-                </Button>
-                
-                <div className="flex items-center space-x-2 my-2">
-                    <Separator className="flex-1"/>
-                    <span className="text-xs text-muted-foreground">หรือ</span>
-                    <Separator className="flex-1"/>
-                </div>
-
-                {showAdminLogin ? (
-                    <form onSubmit={handleAdminLogin} className="flex flex-col space-y-4 animate-in fade-in-50">
-                        <p className="text-center text-sm text-muted-foreground -mt-2">สำหรับผู้ดูแลระบบ</p>
-                        {error && (
-                            <Alert variant="destructive">
-                            <Terminal className="h-4 w-4" />
-                            <AlertTitle>Login Failed</AlertTitle>
-                            <AlertDescription>
-                                {error}
-                            </AlertDescription>
-                            </Alert>
+              <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
+              <CardDescription>เข้าสู่ระบบเพื่อทำข้อสอบ หรือจัดการระบบ</CardDescription>
+            </CardHeader>
+            <CardContent className="px-6 pb-6">
+                <div className="flex flex-col space-y-4">
+                    <Button onClick={handleGoogleLogin} variant="outline" className="h-11 text-base" disabled={isGoogleLoading}>
+                        {isGoogleLoading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <GoogleIcon className="mr-2"/>
                         )}
-                        <div className="space-y-2">
-                            <Label htmlFor="username">ชื่อผู้ใช้</Label>
-                            <Input
-                                id="username"
-                                type="text"
-                                placeholder="ชื่อผู้ใช้"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">รหัสผ่าน</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <Button type="submit" className="w-full h-11 text-lg" variant="default">
-                            <LogIn className="mr-2 h-5 w-5" />
-                            เข้าสู่ระบบ
-                        </Button>
-                    </form>
-                ) : (
-                    <Button variant="ghost" onClick={() => setShowAdminLogin(true)} className="w-full">
-                       สำหรับผู้ดูแลระบบ
+                        เข้าสู่ระบบด้วย Google
                     </Button>
-                )}
-            </div>
-        </CardContent>
-      </Card>
-    </main>
-  );
+                    
+                    <div className="flex items-center space-x-2 my-2">
+                        <Separator className="flex-1"/>
+                        <span className="text-xs text-muted-foreground">หรือ</span>
+                        <Separator className="flex-1"/>
+                    </div>
+    
+                    {showAdminLogin ? (
+                        <form onSubmit={handleAdminLogin} className="flex flex-col space-y-4 animate-in fade-in-50">
+                            <p className="text-center text-sm text-muted-foreground -mt-2">สำหรับผู้ดูแลระบบ</p>
+                            {error && (
+                                <Alert variant="destructive">
+                                <Terminal className="h-4 w-4" />
+                                <AlertTitle>Login Failed</AlertTitle>
+                                <AlertDescription>
+                                    {error}
+                                </AlertDescription>
+                                </Alert>
+                            )}
+                            <div className="space-y-2">
+                                <Label htmlFor="username">ชื่อผู้ใช้</Label>
+                                <Input
+                                    id="username"
+                                    type="text"
+                                    placeholder="ชื่อผู้ใช้"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="password">รหัสผ่าน</Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <Button type="submit" className="w-full h-11 text-lg" variant="default">
+                                <LogIn className="mr-2 h-5 w-5" />
+                                เข้าสู่ระบบ
+                            </Button>
+                        </form>
+                    ) : (
+                        <Button variant="ghost" onClick={() => setShowAdminLogin(true)} className="w-full">
+                           สำหรับผู้ดูแลระบบ
+                        </Button>
+                    )}
+                </div>
+            </CardContent>
+          </Card>
+        </main>
+    );
 }
