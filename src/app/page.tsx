@@ -42,19 +42,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(true); // Start with loading state
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // Listen for auth state changes
+  // This hook handles redirection for users who are already logged in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user && isUserRegistered(user.email!)) {
-            // User is logged in and registered, go to dashboard
             router.push('/dashboard');
         } else {
-             // User is not logged in or not registered, stay on login page
             setIsLoading(false);
         }
     });
-
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [router]);
 
@@ -69,8 +65,6 @@ export default function LoginPage() {
         description: "กำลังนำคุณไปยังหน้าแดชบอร์ดผู้ดูแลระบบ...",
         className: "bg-green-100 dark:bg-green-900",
       });
-      // A simple mock login for admin, in real app, this should be secure
-      // Forcing a navigation, as admin doesn't use Firebase Auth in this mock
       router.push('/admin/dashboard'); 
     } else {
       setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
@@ -105,45 +99,52 @@ export default function LoginPage() {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        if (user && user.email) {
-            // After signInWithPopup, onAuthStateChanged will trigger.
-            // We just need to handle the logic for unregistered users here.
-            if(!isUserRegistered(user.email)) {
-                 const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
-                const existingRequest = pendingRequests.find(req => req.email === user.email);
-
-                if (existingRequest) {
-                    toast({
-                        title: "กำลังรอการอนุมัติ",
-                        description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
-                        variant: "default",
-                    });
-                } else {
-                    const newRequest: PendingRequest = {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName || "No Name",
-                        photoURL: user.photoURL || "",
-                    };
-                    pendingRequests.push(newRequest);
-                    localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
-                    window.dispatchEvent(new Event("storage"));
-                    
-                     toast({
-                        title: "ส่งคำขอสำเร็จ",
-                        description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
-                        variant: "default",
-                        duration: 9000,
-                    });
-                }
-                // Sign out because they are not an approved user yet.
-                await signOut(auth);
-            }
-            // If user is registered, onAuthStateChanged will handle the redirect.
-            // No need to do anything here.
-        } else {
-             throw new Error("ไม่สามารถรับข้อมูลผู้ใช้จาก Google ได้");
+        if (!user || !user.email) {
+            throw new Error("ไม่สามารถรับข้อมูลผู้ใช้จาก Google ได้");
         }
+        
+        // If user is registered, the onAuthStateChanged in useEffect will handle the redirect.
+        // We do nothing here to let the listener take over.
+        if (isUserRegistered(user.email)) {
+            // The listener will redirect. We can simply return to avoid further execution.
+            return;
+        }
+
+        // --- Logic for UNREGISTERED users ---
+        
+        // Check if a request already exists
+        const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
+        const existingRequest = pendingRequests.find(req => req.email === user.email);
+
+        if (existingRequest) {
+            toast({
+                title: "กำลังรอการอนุมัติ",
+                description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
+                variant: "default",
+            });
+        } else {
+            // Create and save a new approval request
+            const newRequest: PendingRequest = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || "No Name",
+                photoURL: user.photoURL || "",
+            };
+            pendingRequests.push(newRequest);
+            localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
+            window.dispatchEvent(new Event("storage"));
+            
+            toast({
+                title: "ส่งคำขอสำเร็จ",
+                description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
+                variant: "default",
+                duration: 9000,
+            });
+        }
+        
+        // Sign out because they are not an approved user yet.
+        await signOut(auth);
+
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             toast({
@@ -248,3 +249,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    
