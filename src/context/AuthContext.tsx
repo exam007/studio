@@ -81,12 +81,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
         }
         
-        toast({
-            title: "ไม่ได้รับอนุญาต",
-            description: "ขออภัย คุณยังไม่มีชื่ออยู่ในระบบ โปรดรอการอนุมัติจากผู้ดูแล",
-            variant: "destructive"
-        });
-        signOut(auth);
+        // This was the error: signing out the user immediately after a new user logs in.
+        // By removing this, the user stays logged in on the login page while waiting for approval.
+        // signOut(auth);
       }
       
       setLoading(false);
