@@ -4,12 +4,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
-import { BookOpen, Loader2 } from "lucide-react";
+import { BookOpen, Loader2, Shield } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -27,29 +30,37 @@ export default function LoginPage() {
   const { user, loading, isRegisteredUser } = useAuth();
   
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+
+  const isAdminUser = user && user.email === 'narongtorn.s@attorney285.co.th';
 
   useEffect(() => {
     if (!loading) {
       setAuthChecked(true);
       if (user) {
-        if (isRegisteredUser) {
+        if (isAdminUser) {
+            router.push('/admin/dashboard');
+        } else if (isRegisteredUser) {
             router.push('/dashboard');
-        } else {
-             // The AuthContext will show the "not registered" toast.
-             // We just need to stay on the page.
         }
+        // If user is logged in but not registered, they stay on the page
+        // and AuthContext handles showing the "pending approval" toast.
       }
     }
-  }, [user, loading, isRegisteredUser, router]);
+  }, [user, loading, isRegisteredUser, isAdminUser, router]);
 
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      // signInWithPopup will trigger onAuthStateChanged in AuthContext
-      // AuthContext will handle user registration, toasts, and redirection.
+      // signInWithPopup will trigger onAuthStateChanged in AuthContext.
+      // The context will then handle redirects or toasts.
       await signInWithPopup(auth, provider);
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
@@ -64,7 +75,29 @@ export default function LoginPage() {
     }
   };
 
-    if (loading || !authChecked || (user && isRegisteredUser)) {
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminEmail || !adminPassword) {
+        toast({ title: "ข้อมูลไม่ครบถ้วน", description: "กรุณากรอกอีเมลและรหัสผ่าน", variant: "destructive"});
+        return;
+    }
+    setIsAdminLoading(true);
+    try {
+        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+        // onAuthStateChanged in AuthContext will handle the redirect
+    } catch(error: any) {
+        console.error(error);
+        toast({
+            title: "เข้าสู่ระบบผู้ดูแลล้มเหลว",
+            description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+            variant: "destructive",
+        });
+    } finally {
+        setIsAdminLoading(false);
+    }
+  }
+
+    if (loading || !authChecked || (user && (isRegisteredUser || isAdminUser))) {
         return (
             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
                 <div className="flex flex-col items-center gap-4 text-center">
@@ -76,8 +109,7 @@ export default function LoginPage() {
         )
     }
     
-    // Auth has been checked, and user is either not logged in, or logged in but not registered.
-    // Show the login page.
+    // Auth has been checked, user is not logged in OR is waiting for approval.
     return (
         <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
           <Card className="w-full max-w-sm shadow-2xl backdrop-blur-sm bg-card/80">
@@ -88,11 +120,13 @@ export default function LoginPage() {
                     </div>
                 </div>
               <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
-              <CardDescription>เข้าสู่ระบบด้วย Google เพื่อส่งคำขอเข้าใช้งานระบบ</CardDescription>
+              <CardDescription>
+                {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'ส่งคำขอเข้าใช้งานระบบด้วยบัญชี Google'}
+              </CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-                <div className="flex flex-col space-y-4">
-                    <Button onClick={handleGoogleLogin} variant="outline" className="h-11 text-base" disabled={isGoogleLoading}>
+                <div className={cn("flex flex-col space-y-4", showAdminLogin && "hidden")}>
+                    <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isGoogleLoading}>
                         {isGoogleLoading ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
@@ -101,8 +135,51 @@ export default function LoginPage() {
                         เข้าสู่ระบบด้วย Google
                     </Button>
                 </div>
+                
+                <form onSubmit={handleAdminLogin} className={cn("flex-col space-y-4", !showAdminLogin && "hidden")}>
+                     <div>
+                        <Label htmlFor="admin-email">อีเมล</Label>
+                        <Input
+                            id="admin-email"
+                            type="email"
+                            placeholder="admin@example.com"
+                            value={adminEmail}
+                            onChange={(e) => setAdminEmail(e.target.value)}
+                            disabled={isAdminLoading}
+                        />
+                    </div>
+                     <div>
+                        <Label htmlFor="admin-password">รหัสผ่าน</Label>
+                        <Input
+                            id="admin-password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={adminPassword}
+                            onChange={(e) => setAdminPassword(e.target.value)}
+                            disabled={isAdminLoading}
+                        />
+                    </div>
+                     <Button type="submit" className="w-full h-11" disabled={isAdminLoading}>
+                        {isAdminLoading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                           <Shield className="mr-2 h-4 w-4" />
+                        )}
+                        เข้าสู่ระบบผู้ดูแล
+                    </Button>
+                </form>
+
+                <div className="mt-6 text-center">
+                     <Button variant="link" className="text-muted-foreground" onClick={() => setShowAdminLogin(!showAdminLogin)}>
+                        {showAdminLogin ? "กลับไปหน้าหลัก" : "สำหรับผู้ดูแลระบบ"}
+                     </Button>
+                </div>
+
             </CardContent>
           </Card>
         </main>
     );
 }
+
+
+    

@@ -2,7 +2,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -21,6 +21,9 @@ const AuthContext = createContext<AuthContextType>({
 const isUserRegistered = (email: string | null): boolean => {
     if (typeof window === 'undefined' || !email) return false;
     
+    // Hardcoded admin email is always "registered"
+    if (email === 'narongtorn.s@attorney285.co.th') return true;
+
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith("user_")) {
@@ -53,6 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsRegisteredUserState(isRegistered);
 
       if (currentUser && !isRegistered) {
+        // This flow is for new users signing up via Google
         const pendingRequests = JSON.parse(localStorage.getItem("pending_requests") || "[]");
         const existingRequest = pendingRequests.find((req: any) => req.email === currentUser.email);
 
@@ -80,10 +84,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 duration: 9000,
             });
         }
-        
-        // This was the error: signing out the user immediately after a new user logs in.
-        // By removing this, the user stays logged in on the login page while waiting for approval.
-        // signOut(auth);
       }
       
       setLoading(false);
@@ -104,3 +104,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   return useContext(AuthContext);
 };
+
+    
