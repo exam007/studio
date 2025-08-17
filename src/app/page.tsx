@@ -160,88 +160,71 @@ export default function LoginPage() {
     }
     
     return (
-        <main className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2">
-            <div className="hidden lg:flex flex-col items-center justify-center bg-primary text-primary-foreground p-12 text-center">
-                <BookOpen className="w-24 h-24 mx-auto mb-6" />
-                <h1 className="text-5xl font-headline font-bold">แนวข้อสอบ</h1>
-                <p className="mt-4 text-lg max-w-md text-primary-foreground/80">
-                    แหล่งรวมแนวข้อสอบคุณภาพเพื่อเตรียมความพร้อมสู่สนามสอบจริง ฝึกฝนและประเมินความสามารถของคุณได้แล้ววันนี้
-                </p>
-            </div>
+        <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
+            <div className="w-full max-w-sm">
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl font-headline font-bold text-foreground">
+                        {showAdminLogin ? 'Admin Login' : 'ยินดีต้อนรับ'}
+                    </h2>
+                    <p className="text-muted-foreground mt-1">
+                        {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'เข้าสู่ระบบหรือส่งคำขอเข้าใช้งาน'}
+                    </p>
+                </div>
 
-            <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-background">
-                <div className="w-full max-w-sm">
-                    <div className="text-center mb-8">
-                        <div className="flex justify-center items-center mb-4 lg:hidden">
-                            <div className="p-3 bg-primary/20 rounded-full">
-                                <BookOpen className="w-8 h-8 text-primary" />
-                            </div>
+                <div className={cn("transition-opacity duration-300", showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+                    <div className="flex flex-col space-y-4">
+                        <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isLoading}>
+                            {isLoading && !showAdminLogin ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <GoogleIcon className="mr-2"/>
+                            )}
+                            เข้าสู่ระบบด้วย Google
+                        </Button>
+                    </div>
+                </div>
+                
+                <div className={cn("transition-opacity duration-300", !showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+                    <form onSubmit={handleAdminLogin} className="flex flex-col space-y-4">
+                            <div>
+                            <Label htmlFor="admin-email">อีเมล</Label>
+                            <Input
+                                id="admin-email"
+                                type="email"
+                                placeholder="admin@example.com"
+                                value={adminEmail}
+                                onChange={(e) => setAdminEmail(e.target.value)}
+                                disabled={isLoading}
+                            />
                         </div>
-                        <h2 className="text-3xl font-headline font-bold text-foreground">
-                            {showAdminLogin ? 'Admin Login' : 'ยินดีต้อนรับ'}
-                        </h2>
-                        <p className="text-muted-foreground mt-1">
-                            {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'เข้าสู่ระบบหรือส่งคำขอเข้าใช้งาน'}
-                        </p>
-                    </div>
-
-                    <div className={cn("transition-opacity duration-300", showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
-                        <div className="flex flex-col space-y-4">
-                            <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isLoading}>
-                                {isLoading && !showAdminLogin ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <GoogleIcon className="mr-2"/>
-                                )}
-                                เข้าสู่ระบบด้วย Google
-                            </Button>
+                            <div>
+                            <Label htmlFor="admin-password">รหัสผ่าน</Label>
+                            <Input
+                                id="admin-password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={adminPassword}
+                                onChange={(e) => setAdminPassword(e.target.value)}
+                                disabled={isLoading}
+                            />
                         </div>
-                    </div>
-                    
-                    <div className={cn("transition-opacity duration-300", !showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
-                        <form onSubmit={handleAdminLogin} className="flex flex-col space-y-4">
-                             <div>
-                                <Label htmlFor="admin-email">อีเมล</Label>
-                                <Input
-                                    id="admin-email"
-                                    type="email"
-                                    placeholder="admin@example.com"
-                                    value={adminEmail}
-                                    onChange={(e) => setAdminEmail(e.target.value)}
-                                    disabled={isLoading}
-                                />
-                            </div>
-                             <div>
-                                <Label htmlFor="admin-password">รหัสผ่าน</Label>
-                                <Input
-                                    id="admin-password"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={adminPassword}
-                                    onChange={(e) => setAdminPassword(e.target.value)}
-                                    disabled={isLoading}
-                                />
-                            </div>
-                             <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                                {isLoading && showAdminLogin ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                   <Shield className="mr-2 h-4 w-4" />
-                                )}
-                                เข้าสู่ระบบผู้ดูแล
-                            </Button>
-                        </form>
-                    </div>
+                            <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                            {isLoading && showAdminLogin ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Shield className="mr-2 h-4 w-4" />
+                            )}
+                            เข้าสู่ระบบผู้ดูแล
+                        </Button>
+                    </form>
+                </div>
 
-                    <div className="mt-6 text-center">
-                         <Button variant="link" className="text-muted-foreground" onClick={() => setShowAdminLogin(!showAdminLogin)}>
-                            {showAdminLogin ? "กลับสู่หน้าเข้าสู่ระบบทั่วไป" : "สำหรับผู้ดูแลระบบ"}
-                         </Button>
-                    </div>
+                <div className="mt-6 text-center">
+                        <Button variant="link" className="text-muted-foreground" onClick={() => setShowAdminLogin(!showAdminLogin)}>
+                        {showAdminLogin ? "กลับสู่หน้าเข้าสู่ระบบทั่วไป" : "สำหรับผู้ดูแลระบบ"}
+                        </Button>
                 </div>
             </div>
         </main>
     );
 }
-
-    
