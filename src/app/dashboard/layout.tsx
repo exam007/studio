@@ -13,7 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 const isUserRegistered = (email: string | null): boolean => {
     if (typeof window === 'undefined' || !email) return false;
 
-    // Admin should not be on this layout, but as a safeguard.
+    // Admin should not be on this layout
     if (email === 'narongtorn.s@attorney285.co.th') return false;
 
     for (let i = 0; i < localStorage.length; i++) {
@@ -43,6 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (!loading) {
             const isRegistered = user ? isUserRegistered(user.email) : false;
             if (!user || !isRegistered) {
+                // If user is not logged in or not a registered user, redirect to home page.
                 router.push('/');
             }
         }
@@ -84,14 +85,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
-                             <SidebarMenuItem>
-                                <Link href="/admin/dashboard" passHref>
-                                    <SidebarMenuButton tooltip="กลับหน้า Admin" size="lg">
-                                        <LayoutDashboard />
-                                        <span>กลับหน้า Admin</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarContent>
                     <SidebarFooter>
@@ -124,3 +117,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarProvider>
     );
 }
+
+    

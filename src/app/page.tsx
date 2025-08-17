@@ -67,36 +67,43 @@ export default function LoginPage() {
         if (isAdmin) {
           router.push('/admin/dashboard');
         } else {
+            // This is for users who are already logged in and registered.
             const isRegistered = isUserRegistered(user.email);
             if (isRegistered) {
                 router.push('/dashboard');
-            } else {
-                // This is a new user who just signed in with Google
-                // but is not on the registered list.
-                toast({
-                    title: "ไม่มีชื่อในระบบ",
-                    description: "บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล",
-                    variant: "destructive",
-                    duration: 9000,
-                });
-                signOut(auth); // Sign out the unauthorized user.
-                setIsCheckingUser(false);
             }
+            // If user is logged in but not registered, they stay on this page
+            // until they are approved (after manual refresh or next login)
         }
-      } else {
-        // No user is logged in
-        setIsCheckingUser(false);
       }
+      setIsCheckingUser(false);
     }
-  }, [user, loading, router, toast]);
+  }, [user, loading, router]);
 
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // After this, the useEffect hook will handle redirection or toast messages.
+      const result = await signInWithPopup(auth, provider);
+      const loggedInUser = result.user;
+      
+      const isRegistered = isUserRegistered(loggedInUser.email);
+      
+      if (isRegistered) {
+        // This will be handled by the useEffect to prevent race conditions
+        // The effect will see the new user and redirect to /dashboard
+      } else {
+        // New user scenario
+        toast({
+            title: "ไม่มีชื่อในระบบ",
+            description: "บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล",
+            variant: "destructive",
+            duration: 9000,
+        });
+        // We must sign out the user if they are not on the list.
+        await signOut(auth);
+      }
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             toast({
@@ -213,3 +220,5 @@ export default function LoginPage() {
         </main>
     );
 }
+
+    
