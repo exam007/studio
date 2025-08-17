@@ -21,7 +21,6 @@ const AuthContext = createContext<AuthContextType>({
 const isUserRegistered = (email: string | null): boolean => {
     if (typeof window === 'undefined' || !email) return false;
     
-    // Hardcoded admin email is always "registered"
     if (email === 'narongtorn.s@attorney285.co.th') return true;
 
     for (let i = 0; i < localStorage.length; i++) {

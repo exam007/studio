@@ -121,12 +121,12 @@ export default function LoginPage() {
                 </div>
               <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
               <CardDescription>
-                {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'ส่งคำขอเข้าใช้งานระบบด้วยบัญชี Google'}
+                {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'เข้าสู่ระบบหรือส่งคำขอเข้าใช้งานด้วยบัญชี Google'}
               </CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
                 <div className={cn("flex flex-col space-y-4", showAdminLogin && "hidden")}>
-                    <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isGoogleLoading}>
+                    <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isGoogleLoading || !!user}>
                         {isGoogleLoading ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
@@ -171,7 +171,7 @@ export default function LoginPage() {
 
                 <div className="mt-6 text-center">
                      <Button variant="link" className="text-muted-foreground" onClick={() => setShowAdminLogin(!showAdminLogin)}>
-                        {showAdminLogin ? "กลับไปหน้าหลัก" : "สำหรับผู้ดูแลระบบ"}
+                        {showAdminLogin ? "กลับสู่หน้าเข้าสู่ระบบทั่วไป" : "สำหรับผู้ดูแลระบบ"}
                      </Button>
                 </div>
 
@@ -180,6 +180,3 @@ export default function LoginPage() {
         </main>
     );
 }
-
-
-    
