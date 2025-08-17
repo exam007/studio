@@ -2,7 +2,7 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, LogOut, BookOpen, User, LayoutDashboard, Loader2 } from "lucide-react";
+import { Home, LogOut, BookOpen, User, LayoutDashboard, Loader2, Eye } from "lucide-react";
 import Link from 'next/link';
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -12,9 +12,6 @@ import { useAuth } from "@/context/AuthContext";
 
 const isUserRegistered = (email: string | null): boolean => {
     if (typeof window === 'undefined' || !email) return false;
-
-    // Admin should not be on this layout
-    if (email === 'narongtorn.s@attorney285.co.th') return false;
 
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -38,16 +35,22 @@ const isUserRegistered = (email: string | null): boolean => {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { user, loading } = useAuth();
+    const isAdmin = user && user.email === 'narongtorn.s@attorney285.co.th';
     
     useEffect(() => {
         if (!loading) {
-            const isRegistered = user ? isUserRegistered(user.email) : false;
-            if (!user || !isRegistered) {
-                // If user is not logged in or not a registered user, redirect to home page.
+            // If no user is logged in, redirect to login page.
+            if (!user) {
                 router.push('/');
+                return;
+            }
+            // If the user is not an admin, check if they are a registered user.
+            // If not registered, redirect them.
+            if (!isAdmin && !isUserRegistered(user.email)) {
+                 router.push('/');
             }
         }
-    }, [user, loading, router]);
+    }, [user, loading, router, isAdmin]);
 
     const handleLogout = async () => {
         await signOut(auth);
@@ -85,6 +88,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
+                             {isAdmin && (
+                                <SidebarMenuItem>
+                                    <Link href="/admin/dashboard" passHref>
+                                        <SidebarMenuButton tooltip="กลับไปหน้า Admin" size="lg">
+                                            <LayoutDashboard />
+                                            <span>กลับไปหน้า Admin</span>
+                                        </SidebarMenuButton>
+                                    </Link>
+                                </SidebarMenuItem>
+                            )}
                         </SidebarMenu>
                     </SidebarContent>
                     <SidebarFooter>

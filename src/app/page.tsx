@@ -72,6 +72,10 @@ export default function LoginPage() {
             const isRegistered = isUserRegistered(user.email);
             if (isRegistered) {
                 router.push('/dashboard');
+            } else {
+                // This case is for google-signed-in users who are not registered.
+                // The error message is now handled in handleGoogleLogin,
+                // so we don't need to do anything here.
             }
         }
       }
@@ -95,6 +99,22 @@ export default function LoginPage() {
       
       if (!isRegistered) {
         setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล");
+        
+        const pendingRequest = {
+            uid: loggedInUser.uid,
+            email: loggedInUser.email,
+            displayName: loggedInUser.displayName,
+            photoURL: loggedInUser.photoURL,
+        };
+        const existingRequests = JSON.parse(localStorage.getItem("pending_requests") || "[]");
+        // Avoid adding duplicate requests
+        if (!existingRequests.some((req: any) => req.uid === pendingRequest.uid)) {
+            const updatedRequests = [...existingRequests, pendingRequest];
+            localStorage.setItem("pending_requests", JSON.stringify(updatedRequests));
+             // Manually trigger storage event for other tabs like the sidebar
+            window.dispatchEvent(new Event('storage'));
+        }
+
         await signOut(auth);
       }
       // If registered, the useEffect will handle the redirect.
@@ -220,4 +240,5 @@ export default function LoginPage() {
         </main>
     );
 }
+
 
