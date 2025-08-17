@@ -3,14 +3,13 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { BookOpen, Loader2, Shield } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -26,8 +25,8 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const isUserRegistered = (email: string | null): boolean => {
     if (typeof window === 'undefined' || !email) return false;
-    
-    // Admin is always registered
+
+    // Admin is always considered registered in this context
     if (email === 'narongtorn.s@attorney285.co.th') return true;
 
     for (let i = 0; i < localStorage.length; i++) {
@@ -75,7 +74,7 @@ export default function LoginPage() {
         router.push('/dashboard');
       } else {
         // This is a new user who just signed in with Google
-        // Let's add them to the pending requests if they aren't there already.
+        // Add them to pending requests if they aren't there already.
         const pendingRequests = JSON.parse(localStorage.getItem("pending_requests") || "[]");
         const existingRequest = pendingRequests.find((req: any) => req.uid === user.uid);
 
@@ -99,6 +98,7 @@ export default function LoginPage() {
              toast({
                 title: "กำลังรอการอนุมัติ",
                 description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
+                duration: 9000,
             });
         }
       }
@@ -139,7 +139,7 @@ export default function LoginPage() {
         console.error(error);
         toast({
             title: "เข้าสู่ระบบผู้ดูแลล้มเหลว",
-            description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือคุณยังไม่ได้เปิดใช้งานการเข้าสู่ระบบด้วยรหัสผ่านใน Firebase Console",
+            description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือคุณยังไม่ได้เปิดใช้งานและสร้างบัญชีใน Firebase Console",
             variant: "destructive",
         });
     } finally {
@@ -147,9 +147,9 @@ export default function LoginPage() {
     }
   }
 
-    if (loading || user) { // Show loader if auth state is loading OR if a user is logged in (and redirect is imminent)
+    if (loading) { 
         return (
-            <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
+            <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Loader2 className="w-16 h-16 animate-spin text-primary"/>
                     <h1 className="text-2xl font-semibold text-foreground">กำลังตรวจสอบสถานะ...</h1>
@@ -159,74 +159,89 @@ export default function LoginPage() {
         )
     }
     
-    // If not loading and no user, show the login page.
     return (
-        <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
-          <Card className="w-full max-w-sm shadow-2xl backdrop-blur-sm bg-card/80">
-            <CardHeader className="text-center">
-                <div className="flex justify-center items-center mb-4">
-                    <div className="p-4 bg-primary/20 rounded-full">
-                        <BookOpen className="w-12 h-12 text-primary" />
-                    </div>
-                </div>
-              <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
-              <CardDescription>
-                {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'เข้าสู่ระบบหรือส่งคำขอเข้าใช้งานด้วยบัญชี Google'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-                <div className={cn("flex flex-col space-y-4", showAdminLogin && "hidden")}>
-                    <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isLoading}>
-                        {isLoading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <GoogleIcon className="mr-2"/>
-                        )}
-                        เข้าสู่ระบบด้วย Google
-                    </Button>
-                </div>
-                
-                <form onSubmit={handleAdminLogin} className={cn("flex-col space-y-4", !showAdminLogin && "hidden")}>
-                     <div>
-                        <Label htmlFor="admin-email">อีเมล</Label>
-                        <Input
-                            id="admin-email"
-                            type="email"
-                            placeholder="admin@example.com"
-                            value={adminEmail}
-                            onChange={(e) => setAdminEmail(e.target.value)}
-                            disabled={isLoading}
-                        />
-                    </div>
-                     <div>
-                        <Label htmlFor="admin-password">รหัสผ่าน</Label>
-                        <Input
-                            id="admin-password"
-                            type="password"
-                            placeholder="••••••••"
-                            value={adminPassword}
-                            onChange={(e) => setAdminPassword(e.target.value)}
-                            disabled={isLoading}
-                        />
-                    </div>
-                     <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                        {isLoading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                           <Shield className="mr-2 h-4 w-4" />
-                        )}
-                        เข้าสู่ระบบผู้ดูแล
-                    </Button>
-                </form>
+        <main className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2">
+            <div className="hidden lg:flex flex-col items-center justify-center bg-primary text-primary-foreground p-12 text-center">
+                <BookOpen className="w-24 h-24 mx-auto mb-6" />
+                <h1 className="text-5xl font-headline font-bold">แนวข้อสอบ</h1>
+                <p className="mt-4 text-lg max-w-md text-primary-foreground/80">
+                    แหล่งรวมแนวข้อสอบคุณภาพเพื่อเตรียมความพร้อมสู่สนามสอบจริง ฝึกฝนและประเมินความสามารถของคุณได้แล้ววันนี้
+                </p>
+            </div>
 
-                <div className="mt-6 text-center">
-                     <Button variant="link" className="text-muted-foreground" onClick={() => setShowAdminLogin(!showAdminLogin)}>
-                        {showAdminLogin ? "กลับสู่หน้าเข้าสู่ระบบทั่วไป" : "สำหรับผู้ดูแลระบบ"}
-                     </Button>
-                </div>
+            <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-background">
+                <div className="w-full max-w-sm">
+                    <div className="text-center mb-8">
+                        <div className="flex justify-center items-center mb-4 lg:hidden">
+                            <div className="p-3 bg-primary/20 rounded-full">
+                                <BookOpen className="w-8 h-8 text-primary" />
+                            </div>
+                        </div>
+                        <h2 className="text-3xl font-headline font-bold text-foreground">
+                            {showAdminLogin ? 'Admin Login' : 'ยินดีต้อนรับ'}
+                        </h2>
+                        <p className="text-muted-foreground mt-1">
+                            {showAdminLogin ? 'เข้าสู่ระบบสำหรับผู้ดูแลระบบ' : 'เข้าสู่ระบบหรือส่งคำขอเข้าใช้งาน'}
+                        </p>
+                    </div>
 
-            </CardContent>
-          </Card>
+                    <div className={cn("transition-opacity duration-300", showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+                        <div className="flex flex-col space-y-4">
+                            <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isLoading}>
+                                {isLoading && !showAdminLogin ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <GoogleIcon className="mr-2"/>
+                                )}
+                                เข้าสู่ระบบด้วย Google
+                            </Button>
+                        </div>
+                    </div>
+                    
+                    <div className={cn("transition-opacity duration-300", !showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+                        <form onSubmit={handleAdminLogin} className="flex flex-col space-y-4">
+                             <div>
+                                <Label htmlFor="admin-email">อีเมล</Label>
+                                <Input
+                                    id="admin-email"
+                                    type="email"
+                                    placeholder="admin@example.com"
+                                    value={adminEmail}
+                                    onChange={(e) => setAdminEmail(e.target.value)}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor="admin-password">รหัสผ่าน</Label>
+                                <Input
+                                    id="admin-password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={adminPassword}
+                                    onChange={(e) => setAdminPassword(e.target.value)}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                             <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                                {isLoading && showAdminLogin ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                   <Shield className="mr-2 h-4 w-4" />
+                                )}
+                                เข้าสู่ระบบผู้ดูแล
+                            </Button>
+                        </form>
+                    </div>
+
+                    <div className="mt-6 text-center">
+                         <Button variant="link" className="text-muted-foreground" onClick={() => setShowAdminLogin(!showAdminLogin)}>
+                            {showAdminLogin ? "กลับสู่หน้าเข้าสู่ระบบทั่วไป" : "สำหรับผู้ดูแลระบบ"}
+                         </Button>
+                    </div>
+                </div>
+            </div>
         </main>
     );
 }
+
+    
