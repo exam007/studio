@@ -5,14 +5,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { BookOpen, LogIn, Terminal, Loader2 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { BookOpen, Loader2 } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 
 
@@ -25,23 +21,11 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
   );
 
-type PendingRequest = {
-    uid: string;
-    email: string;
-    displayName: string;
-    photoURL: string;
-};
-
-
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading, isRegisteredUser } = useAuth();
   
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -54,29 +38,19 @@ export default function LoginPage() {
     }
   }, [user, loading, isRegisteredUser, router]);
 
-
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
-    if (username === "Admin@attorney" && password === "Admin285") {
-      toast({
-        title: "เข้าสู่ระบบสำเร็จ",
-        description: "กำลังนำคุณไปยังหน้าแดชบอร์ดผู้ดูแลระบบ...",
-        className: "bg-green-100 dark:bg-green-900",
-      });
-      router.push('/admin/dashboard'); 
-    } else {
-      setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
-    }
+    router.push('/admin/dashboard');
   };
+
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      // AuthContext's onAuthStateChanged will handle the rest.
+      // signInWithPopup will trigger onAuthStateChanged in AuthContext
+      // AuthContext will handle user registration, toasts, and redirection.
+      await signInWithPopup(auth, provider);
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             toast({
@@ -114,7 +88,7 @@ export default function LoginPage() {
                     </div>
                 </div>
               <CardTitle className="text-4xl font-headline font-bold text-primary">แนวข้อสอบ</CardTitle>
-              <CardDescription>เข้าสู่ระบบเพื่อทำข้อสอบ หรือจัดการระบบ</CardDescription>
+              <CardDescription>เข้าสู่ระบบด้วย Google เพื่อส่งคำขอเข้าใช้งานระบบ</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
                 <div className="flex flex-col space-y-4">
@@ -126,60 +100,16 @@ export default function LoginPage() {
                         )}
                         เข้าสู่ระบบด้วย Google
                     </Button>
-                    
-                    <div className="flex items-center space-x-2 my-2">
-                        <Separator className="flex-1"/>
-                        <span className="text-xs text-muted-foreground">หรือ</span>
-                        <Separator className="flex-1"/>
-                    </div>
-    
-                    {showAdminLogin ? (
-                        <form onSubmit={handleAdminLogin} className="flex flex-col space-y-4 animate-in fade-in-50">
-                            <p className="text-center text-sm text-muted-foreground -mt-2">สำหรับผู้ดูแลระบบ</p>
-                            {error && (
-                                <Alert variant="destructive">
-                                <Terminal className="h-4 w-4" />
-                                <AlertTitle>Login Failed</AlertTitle>
-                                <AlertDescription>
-                                    {error}
-                                </AlertDescription>
-                                </Alert>
-                            )}
-                            <div className="space-y-2">
-                                <Label htmlFor="username">ชื่อผู้ใช้</Label>
-                                <Input
-                                    id="username"
-                                    type="text"
-                                    placeholder="ชื่อผู้ใช้"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="password">รหัสผ่าน</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <Button type="submit" className="w-full h-11 text-lg" variant="default">
-                                <LogIn className="mr-2 h-5 w-5" />
-                                เข้าสู่ระบบ
-                            </Button>
-                        </form>
-                    ) : (
-                        <Button variant="ghost" onClick={() => setShowAdminLogin(true)} className="w-full">
-                           สำหรับผู้ดูแลระบบ
-                        </Button>
-                    )}
                 </div>
             </CardContent>
           </Card>
+          <div className="mt-4">
+             <Button variant="ghost" onClick={handleAdminLogin} className="w-full">
+                สำหรับผู้ดูแลระบบ
+             </Button>
+          </div>
         </main>
     );
 }
+
+    
