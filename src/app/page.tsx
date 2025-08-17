@@ -161,8 +161,8 @@ export default function LoginPage() {
     
     return (
         <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
-            <div className="w-full max-w-sm">
-                <div className="text-center mb-8">
+            <div className="w-full max-w-sm p-8 space-y-6 bg-card rounded-2xl shadow-2xl">
+                <div className="text-center">
                     <h2 className="text-3xl font-headline font-bold text-foreground">
                         {showAdminLogin ? 'Admin Login' : 'ยินดีต้อนรับ'}
                     </h2>
