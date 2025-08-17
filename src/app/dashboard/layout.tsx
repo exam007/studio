@@ -10,16 +10,43 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
+const isUserRegistered = (email: string | null): boolean => {
+    if (typeof window === 'undefined' || !email) return false;
+
+    // Admin should not be on this layout, but as a safeguard.
+    if (email === 'narongtorn.s@attorney285.co.th') return false;
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("user_")) {
+            const item = localStorage.getItem(key);
+            if(item){
+                try {
+                    const storedUser = JSON.parse(item);
+                    if (storedUser.email && storedUser.email.toLowerCase() === email.toLowerCase()) {
+                        return true;
+                    }
+                } catch(e) {
+                    console.error("Failed to parse user from localStorage", e);
+                }
+            }
+        }
+    }
+    return false;
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
-    const { user, loading, isRegisteredUser } = useAuth();
+    const { user, loading } = useAuth();
     
     useEffect(() => {
-        if (!loading && (!user || !isRegisteredUser)) {
-            router.push('/');
+        if (!loading) {
+            const isRegistered = user ? isUserRegistered(user.email) : false;
+            if (!user || !isRegistered) {
+                router.push('/');
+            }
         }
-    }, [user, loading, isRegisteredUser, router]);
+    }, [user, loading, router]);
 
     const handleLogout = async () => {
         await signOut(auth);

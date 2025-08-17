@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { BookOpen, Loader2, Shield } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, User } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -24,44 +24,94 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
   );
 
+const isUserRegistered = (email: string | null): boolean => {
+    if (typeof window === 'undefined' || !email) return false;
+    
+    // Admin is always registered
+    if (email === 'narongtorn.s@attorney285.co.th') return true;
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("user_")) {
+            const item = localStorage.getItem(key);
+            if(item){
+                try {
+                    const storedUser = JSON.parse(item);
+                    if (storedUser.email && storedUser.email.toLowerCase() === email.toLowerCase()) {
+                        return true;
+                    }
+                } catch(e) {
+                    console.error("Failed to parse user from localStorage", e);
+                }
+            }
+        }
+    }
+    return false;
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading, isRegisteredUser } = useAuth();
+  const { user, loading } = useAuth();
   
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isAdminLoading, setIsAdminLoading] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
 
-  const isAdminUser = user && user.email === 'narongtorn.s@attorney285.co.th';
-
   useEffect(() => {
-    if (!loading) {
-      setAuthChecked(true);
-      if (user) {
-        if (isAdminUser) {
-            router.push('/admin/dashboard');
-        } else if (isRegisteredUser) {
-            router.push('/dashboard');
+    if (loading) {
+      return; // Wait until user status is resolved
+    }
+
+    if (user) {
+      const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
+      const isRegistered = isUserRegistered(user.email);
+
+      if (isAdmin) {
+        router.push('/admin/dashboard');
+      } else if (isRegistered) {
+        router.push('/dashboard');
+      } else {
+        // This is a new user who just signed in with Google
+        // Let's add them to the pending requests if they aren't there already.
+        const pendingRequests = JSON.parse(localStorage.getItem("pending_requests") || "[]");
+        const existingRequest = pendingRequests.find((req: any) => req.uid === user.uid);
+
+        if (!existingRequest) {
+            const newRequest = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || "No Name",
+                photoURL: user.photoURL || "",
+            };
+            pendingRequests.push(newRequest);
+            localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
+            window.dispatchEvent(new Event("storage"));
+            
+            toast({
+                title: "ส่งคำขอสำเร็จ",
+                description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
+                duration: 9000,
+            });
+        } else {
+             toast({
+                title: "กำลังรอการอนุมัติ",
+                description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
+            });
         }
-        // If user is logged in but not registered, they stay on the page
-        // and AuthContext handles showing the "pending approval" toast.
       }
     }
-  }, [user, loading, isRegisteredUser, isAdminUser, router]);
+  }, [user, loading, router, toast]);
 
 
   const handleGoogleLogin = async () => {
-    setIsGoogleLoading(true);
+    setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      // signInWithPopup will trigger onAuthStateChanged in AuthContext.
-      // The context will then handle redirects or toasts.
       await signInWithPopup(auth, provider);
+      // After this, the useEffect hook will handle redirection or toast messages.
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             toast({
@@ -71,7 +121,7 @@ export default function LoginPage() {
             });
         }
     } finally {
-        setIsGoogleLoading(false);
+        setIsLoading(false);
     }
   };
 
@@ -81,23 +131,23 @@ export default function LoginPage() {
         toast({ title: "ข้อมูลไม่ครบถ้วน", description: "กรุณากรอกอีเมลและรหัสผ่าน", variant: "destructive"});
         return;
     }
-    setIsAdminLoading(true);
+    setIsLoading(true);
     try {
         await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-        // onAuthStateChanged in AuthContext will handle the redirect via useEffect
+        // After this, the useEffect hook will handle the redirect.
     } catch(error: any) {
         console.error(error);
         toast({
             title: "เข้าสู่ระบบผู้ดูแลล้มเหลว",
-            description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+            description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือคุณยังไม่ได้เปิดใช้งานการเข้าสู่ระบบด้วยรหัสผ่านใน Firebase Console",
             variant: "destructive",
         });
     } finally {
-        setIsAdminLoading(false);
+        setIsLoading(false);
     }
   }
 
-    if (loading || !authChecked || (user && (isRegisteredUser || isAdminUser))) {
+    if (loading || user) { // Show loader if auth state is loading OR if a user is logged in (and redirect is imminent)
         return (
             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
                 <div className="flex flex-col items-center gap-4 text-center">
@@ -109,7 +159,7 @@ export default function LoginPage() {
         )
     }
     
-    // Auth has been checked, user is not logged in OR is waiting for approval.
+    // If not loading and no user, show the login page.
     return (
         <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
           <Card className="w-full max-w-sm shadow-2xl backdrop-blur-sm bg-card/80">
@@ -126,8 +176,8 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent className="px-6 pb-6">
                 <div className={cn("flex flex-col space-y-4", showAdminLogin && "hidden")}>
-                    <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isGoogleLoading || !!user}>
-                        {isGoogleLoading ? (
+                    <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isLoading}>
+                        {isLoading ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
                             <GoogleIcon className="mr-2"/>
@@ -145,7 +195,7 @@ export default function LoginPage() {
                             placeholder="admin@example.com"
                             value={adminEmail}
                             onChange={(e) => setAdminEmail(e.target.value)}
-                            disabled={isAdminLoading}
+                            disabled={isLoading}
                         />
                     </div>
                      <div>
@@ -156,11 +206,11 @@ export default function LoginPage() {
                             placeholder="••••••••"
                             value={adminPassword}
                             onChange={(e) => setAdminPassword(e.target.value)}
-                            disabled={isAdminLoading}
+                            disabled={isLoading}
                         />
                     </div>
-                     <Button type="submit" className="w-full h-11" disabled={isAdminLoading}>
-                        {isAdminLoading ? (
+                     <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                        {isLoading ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
                            <Shield className="mr-2 h-4 w-4" />
@@ -180,4 +230,3 @@ export default function LoginPage() {
         </main>
     );
 }
-

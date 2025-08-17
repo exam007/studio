@@ -26,15 +26,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const [pendingCount, setPendingCount] = useState(0);
     
-    // This is a mock check for admin rights. In a real app, you'd have a more robust system.
-    const isAdmin = user && user.email === 'narongtorn.s@attorney285.co.th';
-    
     useEffect(() => {
-        if (!loading && (!user || !isAdmin)) {
-            // Redirect non-admins or logged-out users to the home page
-            router.push('/');
+        if (!loading) {
+            const isAdmin = user && user.email === 'narongtorn.s@attorney285.co.th';
+            if (!user || !isAdmin) {
+                router.push('/');
+            }
         }
-    }, [user, loading, isAdmin, router]);
+    }, [user, loading, router]);
 
     const handleLogout = async () => {
         await signOut(auth);
@@ -76,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         };
     }, []);
 
-    if (loading || !user || !isAdmin) {
+    if (loading || !user) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
