@@ -26,11 +26,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const [pendingCount, setPendingCount] = useState(0);
     
+    // This is a mock check for admin rights. In a real app, you'd have a more robust system.
+    const isAdmin = user && user.email === 'narongtorn.s@attorney285.co.th';
+    
     useEffect(() => {
-        if (!loading && !user) {
+        if (!loading && (!user || !isAdmin)) {
+            // Redirect non-admins or logged-out users to the home page
             router.push('/');
         }
-    }, [user, loading, router]);
+    }, [user, loading, isAdmin, router]);
 
     const handleLogout = async () => {
         await signOut(auth);
@@ -64,6 +68,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         checkPendingRequests();
         
+        // Listen for changes in localStorage from other tabs/windows
         window.addEventListener('storage', checkPendingRequests);
 
         return () => {
@@ -71,12 +76,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         };
     }, []);
 
-    if (loading || !user) {
+    if (loading || !user || !isAdmin) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    <p className="text-muted-foreground">กำลังตรวจสอบสิทธิ์...</p>
+                    <p className="text-muted-foreground">กำลังตรวจสอบสิทธิ์ผู้ดูแล...</p>
                 </div>
             </div>
         )

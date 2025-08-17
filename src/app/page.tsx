@@ -32,16 +32,16 @@ export default function LoginPage() {
   useEffect(() => {
     if (!loading) {
       setAuthChecked(true);
-      if (user && isRegisteredUser) {
-        router.push('/dashboard');
+      if (user) {
+        if (isRegisteredUser) {
+            router.push('/dashboard');
+        } else {
+             // The AuthContext will show the "not registered" toast.
+             // We just need to stay on the page.
+        }
       }
     }
   }, [user, loading, isRegisteredUser, router]);
-
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push('/admin/dashboard');
-  };
 
 
   const handleGoogleLogin = async () => {
@@ -64,7 +64,7 @@ export default function LoginPage() {
     }
   };
 
-    if (loading || !authChecked) {
+    if (loading || !authChecked || (user && isRegisteredUser)) {
         return (
             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
                 <div className="flex flex-col items-center gap-4 text-center">
@@ -76,7 +76,7 @@ export default function LoginPage() {
         )
     }
     
-    // Auth has been checked, but user is not registered or not logged in.
+    // Auth has been checked, and user is either not logged in, or logged in but not registered.
     // Show the login page.
     return (
         <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
@@ -103,13 +103,6 @@ export default function LoginPage() {
                 </div>
             </CardContent>
           </Card>
-          <div className="mt-4">
-             <Button variant="ghost" onClick={handleAdminLogin} className="w-full">
-                สำหรับผู้ดูแลระบบ
-             </Button>
-          </div>
         </main>
     );
 }
-
-    
