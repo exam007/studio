@@ -12,7 +12,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BookOpen, LogIn, Terminal, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { useAuth } from "@/context/AuthContext";
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -35,24 +36,20 @@ type PendingRequest = {
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading, isRegisteredUser } = useAuth();
+  
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading state
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // This hook handles redirection for users who are already logged in
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user && isUserRegistered(user.email!)) {
-            router.push('/dashboard');
-        } else {
-            setIsLoading(false);
-        }
-    });
-    return () => unsubscribe();
-  }, [router]);
+    // Redirect if user is logged in and registered
+    if (!loading && user && isRegisteredUser) {
+        router.push('/dashboard');
+    }
+  }, [user, loading, isRegisteredUser, router]);
 
 
   const handleAdminLogin = (e: React.FormEvent) => {
@@ -71,79 +68,56 @@ export default function LoginPage() {
     }
   };
 
-  const isUserRegistered = (email: string): boolean => {
-    if (typeof window === 'undefined') return false;
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("user_")) {
-            const item = localStorage.getItem(key);
-            if(item){
-                try {
-                    const storedUser = JSON.parse(item);
-                    if (storedUser.email && storedUser.email.toLowerCase() === email.toLowerCase()) {
-                        return true;
-                    }
-                } catch(e) {
-                    console.error("Failed to parse user from localStorage", e);
-                }
-            }
-        }
-    }
-    return false;
-  }
-
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
         const result = await signInWithPopup(auth, provider);
-        const user = result.user;
+        const loggedInUser = result.user;
 
-        if (!user || !user.email) {
+        if (!loggedInUser || !loggedInUser.email) {
             throw new Error("ไม่สามารถรับข้อมูลผู้ใช้จาก Google ได้");
         }
         
-        // If user is registered, the onAuthStateChanged in useEffect will handle the redirect.
-        // We do nothing here to let the listener take over.
-        if (isUserRegistered(user.email)) {
-            // The listener will redirect. We can simply return to avoid further execution.
-            return;
-        }
+        // The useEffect hook will handle redirection for registered users.
+        // We now check if the user is NOT registered to handle the pending request logic.
+        const isRegistered = isRegisteredUser; // use the state from context which is already calculated
 
-        // --- Logic for UNREGISTERED users ---
-        
-        // Check if a request already exists
-        const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
-        const existingRequest = pendingRequests.find(req => req.email === user.email);
+        if (!isRegistered) {
+            const pendingRequests: PendingRequest[] = JSON.parse(localStorage.getItem("pending_requests") || "[]");
+            const existingRequest = pendingRequests.find(req => req.email === loggedInUser.email);
 
-        if (existingRequest) {
+            if (existingRequest) {
+                toast({
+                    title: "กำลังรอการอนุมัติ",
+                    description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
+                    variant: "default",
+                });
+            } else {
+                const newRequest: PendingRequest = {
+                    uid: loggedInUser.uid,
+                    email: loggedInUser.email,
+                    displayName: loggedInUser.displayName || "No Name",
+                    photoURL: loggedInUser.photoURL || "",
+                };
+                pendingRequests.push(newRequest);
+                localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
+                window.dispatchEvent(new Event("storage"));
+                
+                toast({
+                    title: "ส่งคำขอสำเร็จ",
+                    description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
+                    variant: "default",
+                    duration: 9000,
+                });
+            }
+            await signOut(auth);
             toast({
-                title: "กำลังรอการอนุมัติ",
-                description: "คำขอเข้าสู่ระบบของคุณถูกส่งไปแล้ว โปรดรอการอนุมัติจากผู้ดูแลระบบ",
-                variant: "default",
-            });
-        } else {
-            // Create and save a new approval request
-            const newRequest: PendingRequest = {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName || "No Name",
-                photoURL: user.photoURL || "",
-            };
-            pendingRequests.push(newRequest);
-            localStorage.setItem("pending_requests", JSON.stringify(pendingRequests));
-            window.dispatchEvent(new Event("storage"));
-            
-            toast({
-                title: "ส่งคำขอสำเร็จ",
-                description: "คำขอของคุณได้ถูกส่งไปให้ผู้ดูแลระบบเพื่อทำการอนุมัติแล้ว",
-                variant: "default",
-                duration: 9000,
+                title: "ไม่ได้รับอนุญาต",
+                description: "ขออภัย คุณยังไม่มีชื่ออยู่ในระบบ โปรดรอการอนุมัติจากผู้ดูแล",
+                variant: "destructive"
             });
         }
-        
-        // Sign out because they are not an approved user yet.
-        await signOut(auth);
 
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
@@ -158,16 +132,28 @@ export default function LoginPage() {
     }
   };
 
-    if (isLoading) {
+    if (loading) {
         return (
             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Loader2 className="w-16 h-16 animate-spin text-primary"/>
-                    <h1 className="text-2xl font-semibold text-foreground">กำลังโหลด...</h1>
+                    <h1 className="text-2xl font-semibold text-foreground">กำลังตรวจสอบสถานะ...</h1>
                     <p className="text-muted-foreground">กรุณารอสักครู่</p>
                 </div>
             </main>
         )
+    }
+    
+    // Don't render login page if user is logged in and registered, let useEffect redirect
+    if (user && isRegisteredUser) {
+        return (
+             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-blue-200 dark:from-background dark:to-blue-950">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <Loader2 className="w-16 h-16 animate-spin text-primary"/>
+                    <h1 className="text-2xl font-semibold text-foreground">กำลังเข้าสู่ระบบ...</h1>
+                </div>
+            </main>
+        );
     }
 
   return (
@@ -249,5 +235,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
-    

@@ -7,8 +7,9 @@ import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 type PendingRequest = {
     uid: string;
@@ -21,27 +22,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { user, loading } = useAuth();
+
     const [pendingCount, setPendingCount] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                // Not logged in, redirect to login page
-                router.push('/');
-            } else {
-                 // User is logged in, stop loading
-                setIsLoading(false);
-            }
-        });
-        
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
-    }, [router]);
+        if (!loading && !user) {
+            router.push('/');
+        }
+    }, [user, loading, router]);
 
     const handleLogout = async () => {
         await signOut(auth);
-        // router.push('/'); // onAuthStateChanged will handle the redirect
+        router.push('/');
     };
 
 
@@ -59,6 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
      useEffect(() => {
         const checkPendingRequests = () => {
+            if (typeof window === 'undefined') return;
             const storedRequests = localStorage.getItem("pending_requests");
             if (storedRequests) {
                 const requests: PendingRequest[] = JSON.parse(storedRequests);
@@ -70,7 +64,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         checkPendingRequests();
         
-        // Listen for storage changes to update the badge in real-time
         window.addEventListener('storage', checkPendingRequests);
 
         return () => {
@@ -78,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         };
     }, []);
 
-    if (isLoading) {
+    if (loading || !user) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">

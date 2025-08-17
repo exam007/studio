@@ -4,35 +4,29 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, S
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Home, LogOut, BookOpen, User, LayoutDashboard, Loader2 } from "lucide-react";
 import Link from 'next/link';
-import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true);
-    const [user, setUser] = useState<FirebaseUser | null>(null);
-
+    const { user, loading, isRegisteredUser } = useAuth();
+    
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                setIsLoading(false);
-            } else {
-                router.push('/');
-            }
-        });
-        
-        return () => unsubscribe();
-    }, [router]);
+        if (!loading && (!user || !isRegisteredUser)) {
+            router.push('/');
+        }
+    }, [user, loading, isRegisteredUser, router]);
 
     const handleLogout = async () => {
         await signOut(auth);
+        router.push('/');
     };
 
-    if (isLoading) {
+    if (loading || !user) {
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
