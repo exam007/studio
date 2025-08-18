@@ -1,56 +1,69 @@
+
+"use client";
+
 import { QuizTaker } from "@/components/quiz/QuizTaker";
 import { BookOpen } from "lucide-react";
+import type { Question } from "@/app/admin/edit-exam/[id]/page";
+import type { Exam } from "@/components/admin/DashboardContent";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
-// This would typically be fetched from a database based on the [id]
-const MOCK_QUIZ_DATA = {
-  id: '1',
-  title: 'General Knowledge Challenge',
-  timeInMinutes: 20,
-  questions: [
-    {
-      id: 'q1',
-      type: 'mcq',
-      text: 'What is the capital of Japan?',
-      options: [
-        { id: 'q1o1', text: 'Beijing' },
-        { id: 'q1o2', text: 'Seoul' },
-        { id: 'q1o3', text: 'Tokyo' },
-        { id: 'q1o4', text: 'Bangkok' },
-      ],
-    },
-    {
-      id: 'q2',
-      type: 'tf',
-      text: 'The Great Wall of China is visible from the moon with the naked eye.',
-      options: [
-        { id: 'true', text: 'True' },
-        { id: 'false', text: 'False' },
-      ],
-    },
-    {
-      id: 'q3',
-      type: 'short',
-      text: 'Which planet is known as the Red Planet?',
-    },
-    {
-        id: 'q4',
-        type: 'mcq',
-        text: 'Who wrote the play "Romeo and Juliet"?',
-        options: [
-          { id: 'q4o1', text: 'Charles Dickens' },
-          { id: 'q4o2', text: 'William Shakespeare' },
-          { id: 'q4o3', text: 'Jane Austen' },
-          { id: 'q4o4', text: 'Mark Twain' },
-        ],
-      },
-  ],
-};
-
+type QuizData = {
+  id: string;
+  title: string;
+  timeInMinutes: number;
+  questions: Question[];
+}
 
 export default function TakeQuizPage({ params }: { params: { id: string } }) {
-  // In a real app, you would use params.id to fetch quiz data.
-  // For this example, we use mock data.
-  const quiz = MOCK_QUIZ_DATA;
+  const { id } = params;
+  const [quizData, setQuizData] = useState<QuizData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const examDetailsString = localStorage.getItem(`exam_details_${id}`);
+      const questionsString = localStorage.getItem(`exam_questions_${id}`);
+
+      if (examDetailsString && questionsString) {
+        const examDetails: Exam = JSON.parse(examDetailsString);
+        const questions: Question[] = JSON.parse(questionsString);
+
+        setQuizData({
+          id: examDetails.id,
+          title: examDetails.name,
+          timeInMinutes: examDetails.timeInMinutes,
+          questions: questions,
+        });
+      }
+      setLoading(false);
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-muted-foreground">กำลังโหลดข้อสอบ...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!quizData || quizData.questions.length === 0) {
+    return (
+        <div className="flex flex-col items-center min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-4xl text-center">
+                 <div className="flex justify-center items-center mb-4">
+                    <BookOpen className="w-10 h-10 text-destructive" />
+                </div>
+                <h1 className="text-4xl font-headline font-bold">ไม่พบข้อสอบ</h1>
+                <p className="text-muted-foreground mt-2">ไม่พบข้อมูลข้อสอบสำหรับรหัสนี้ หรือยังไม่มีคำถามในข้อสอบ</p>
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -59,10 +72,10 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
                 <div className="flex justify-center items-center mb-4">
                     <BookOpen className="w-10 h-10 text-primary" />
                 </div>
-                <h1 className="text-4xl font-headline font-bold">{quiz.title}</h1>
-                <p className="text-muted-foreground mt-2">Answer the questions below. Good luck!</p>
+                <h1 className="text-4xl font-headline font-bold">{quizData.title}</h1>
+                <p className="text-muted-foreground mt-2">ตั้งใจทำข้อสอบ ขอให้โชคดี!</p>
             </header>
-            <QuizTaker quiz={quiz} />
+            <QuizTaker quiz={quizData} />
         </div>
     </div>
   );
