@@ -75,11 +75,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <SidebarProvider>
-            <div className="flex min-h-screen">
-                <Sidebar variant="sidebar" side="left" collapsible="icon">
+            <div className="flex min-h-screen w-full">
+                <Sidebar variant="sidebar" side="left" collapsible="icon" className="bg-sidebar text-sidebar-foreground">
                     <SidebarHeader>
-                        <div className="flex items-center gap-2 p-2 justify-center">
-                           <BookOpen className="w-8 h-8 text-sidebar-primary"/>
+                        <div className="flex items-center gap-2 p-4 justify-center">
+                           <BookOpen className="w-6 h-6 text-sidebar-primary"/>
                            <h2 className="text-2xl font-headline font-semibold text-sidebar-primary group-data-[collapsible=icon]:hidden">แนวข้อสอบ</h2>
                         </div>
                     </SidebarHeader>
@@ -87,18 +87,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <Link href="/dashboard" passHref>
-                                    <SidebarMenuButton tooltip="หน้าหลัก" size="lg" isActive={isActive("/dashboard")}>
+                                    <SidebarMenuButton tooltip="หน้าหลัก" size="lg" isActive={isActive("/dashboard")} className="group-data-[collapsible=icon]:justify-center">
                                         <Home />
-                                        <span>หน้าหลัก</span>
+                                        <span className="group-data-[collapsible=icon]:hidden">หน้าหลัก</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
                              {isAdmin && (
                                 <SidebarMenuItem>
                                     <Link href="/admin/dashboard" passHref>
-                                        <SidebarMenuButton tooltip="กลับไปหน้า Admin" size="lg" isActive={isActive("/admin/dashboard")}>
+                                        <SidebarMenuButton tooltip="กลับไปหน้า Admin" size="lg" isActive={isActive("/admin/dashboard")} className="group-data-[collapsible=icon]:justify-center">
                                             <LayoutDashboard />
-                                            <span>กลับไปหน้า Admin</span>
+                                            <span className="group-data-[collapsible=icon]:hidden">กลับไปหน้า Admin</span>
                                         </SidebarMenuButton>
                                     </Link>
                                 </SidebarMenuItem>
@@ -108,16 +108,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <SidebarFooter>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Logout" size="lg" onClick={handleLogout}>
+                                <SidebarMenuButton tooltip="Logout" size="lg" onClick={handleLogout} className="group-data-[collapsible=icon]:justify-center">
                                     <LogOut />
-                                    <span>Logout</span>
+                                    <span className="group-data-[collapsible=icon]:hidden">Logout</span>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
                 <div className="flex-1 flex flex-col">
-                    <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8 bg-card border-b">
+                    <header className="flex h-14 items-center justify-between border-b bg-card px-4 sm:px-6">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
                             <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
@@ -127,7 +127,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </Avatar>
                         </div>
                     </header>
-                    <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                    <main className="flex-1 overflow-auto bg-muted/30 p-4 sm:p-6">
                         {children}
                     </main>
                 </div>
