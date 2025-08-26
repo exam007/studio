@@ -149,7 +149,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </SidebarFooter>
                 </Sidebar>
                 <div className="flex flex-col flex-1">
-                     <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8 bg-card border-b">
+                     <header className="flex items-center justify-between p-4 sm:p-6 bg-card border-b">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
                             <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>

@@ -112,7 +112,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarFooter>
                 </Sidebar>
                 <div className="flex flex-col flex-1">
-                    <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8 bg-card border-b">
+                    <header className="flex items-center justify-between p-4 sm:p-6 bg-card border-b">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
                             <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
@@ -124,9 +124,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </header>
                     <SidebarInset>
                         <main className="p-4 sm:p-6 lg:p-8">
-                            <div className="max-w-7xl mx-auto">
-                                {children}
-                            </div>
+                            {children}
                         </main>
                     </SidebarInset>
                 </div>

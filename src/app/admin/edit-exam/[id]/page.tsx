@@ -98,7 +98,8 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto animate-in fade-in-50">
+    <div className="animate-in fade-in-50">
+      <div className="max-w-7xl mx-auto">
         <div className="mb-6">
             <Link href="/admin/dashboard">
                 <Button variant="outline" size="sm" className="mb-4">
@@ -142,6 +143,7 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
             <Button onClick={handleSaveChanges}>บันทึกการเปลี่ยนแปลง</Button>
         </div>
       </div>
+    </div>
     </div>
   );
 }
