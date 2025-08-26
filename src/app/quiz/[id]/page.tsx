@@ -54,7 +54,7 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
   if (!quizData || quizData.questions.length === 0) {
     return (
         <div className="flex flex-col items-center min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-            <div className="w-full text-center">
+             <div className="w-full max-w-4xl text-center">
                  <div className="flex justify-center items-center mb-4">
                     <BookOpen className="w-10 h-10 text-destructive" />
                 </div>

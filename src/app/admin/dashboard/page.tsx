@@ -10,7 +10,9 @@ export const dynamic = 'force-dynamic';
 export default function AdminDashboardPage() {
     return (
         <Suspense fallback={<div className="flex justify-center items-center h-screen w-full"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-            <DashboardContent />
+            <div className="max-w-7xl mx-auto">
+                <DashboardContent />
+            </div>
         </Suspense>
     );
 };
