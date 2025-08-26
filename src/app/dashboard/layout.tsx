@@ -112,19 +112,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarFooter>
                 </Sidebar>
                 <SidebarInset>
-                    <div className="fixed top-0 right-0 p-4 z-20 flex items-center gap-4">
-                        <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
-                        <Avatar className="h-9 w-9">
-                            <AvatarImage src={user?.photoURL || "https://placehold.co/40x40"} alt="User avatar" data-ai-hint="user avatar" />
-                            <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                        </Avatar>
+                     <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+                        <header className="flex items-center justify-between border-b pb-4 mb-8">
+                            <SidebarTrigger />
+                            <div className="flex items-center gap-4">
+                                <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={user?.photoURL || "https://placehold.co/40x40"} alt="User avatar" data-ai-hint="user avatar" />
+                                    <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                                </Avatar>
+                            </div>
+                        </header>
+                        <main>
+                            {children}
+                        </main>
                     </div>
-                    <header className="flex items-center justify-between p-4 border-b">
-                        <SidebarTrigger />
-                    </header>
-                    <main className="p-4 sm:p-6 lg:p-8 flex-1">
-                        {children}
-                    </main>
                 </SidebarInset>
             </div>
         </SidebarProvider>
