@@ -60,7 +60,7 @@ export default function QuizResultsPage() {
     const { score, totalQuestions, results, timeTakenInSeconds, totalTimeInMinutes } = MOCK_RESULTS;
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col items-center bg-background p-4 sm:p-6 lg:p-8">
             <Card className="w-full max-w-3xl text-center shadow-2xl animate-in fade-in-50">
                 <CardHeader>
                     <div className="flex justify-center mb-4">
@@ -147,4 +147,3 @@ export default function QuizResultsPage() {
         </div>
     );
 }
-

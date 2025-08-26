@@ -1,4 +1,3 @@
-
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -161,13 +160,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </header>
                     <SidebarInset>
                          <main className="p-4 sm:p-6 lg:p-8">
-                            <div className="max-w-7xl mx-auto">
-                                <div className="mb-8">
-                                    <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
-                                    <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
-                                </div>
-                                {children}
+                            <div className="mb-8">
+                                <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
+                                <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
                             </div>
+                            {children}
                         </main>
                     </SidebarInset>
                 </div>

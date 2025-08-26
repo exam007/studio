@@ -99,49 +99,47 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="animate-in fade-in-50">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-            <Link href="/admin/dashboard">
-                <Button variant="outline" size="sm" className="mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4"/>
-                    กลับไปหน้า Dashboard
-                </Button>
-            </Link>
-            <h1 className="text-3xl font-headline font-bold">แก้ไขข้อสอบ</h1>
-            <p className="text-muted-foreground mt-1">
-            คุณกำลังแก้ไขข้อสอบ: <span className="font-semibold text-primary">{examName} ({id})</span>
-            </p>
-      </div>
+      <div className="mb-6">
+          <Link href="/admin/dashboard">
+              <Button variant="outline" size="sm" className="mb-4">
+                  <ArrowLeft className="mr-2 h-4 w-4"/>
+                  กลับไปหน้า Dashboard
+              </Button>
+          </Link>
+          <h1 className="text-3xl font-headline font-bold">แก้ไขข้อสอบ</h1>
+          <p className="text-muted-foreground mt-1">
+          คุณกำลังแก้ไขข้อสอบ: <span className="font-semibold text-primary">{examName} ({id})</span>
+          </p>
+    </div>
 
-      <div className="space-y-8">
-        <Card>
-            <CardHeader>
-                <CardTitle>คำถามทั้งหมด</CardTitle>
-                <CardDescription>จัดการคำถาม ตัวเลือก และคำตอบที่ถูกต้อง</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                 {questions.map((q, index) => (
-                    <QuestionEditor 
-                        key={q.id}
-                        index={index}
-                        question={q}
-                        updateQuestion={updateQuestion}
-                        removeQuestion={removeQuestion}
-                    />
-                ))}
-                
-                <Button variant="outline" onClick={addQuestion}>
-                    <PlusCircle className="mr-2 h-4 w-4"/> เพิ่มคำถามใหม่
-                </Button>
-            </CardContent>
-        </Card>
-        
-        <div className="flex justify-end gap-2">
-            <Link href="/admin/dashboard">
-                <Button variant="outline">ยกเลิก</Button>
-            </Link>
-            <Button onClick={handleSaveChanges}>บันทึกการเปลี่ยนแปลง</Button>
-        </div>
+    <div className="space-y-8">
+      <Card>
+          <CardHeader>
+              <CardTitle>คำถามทั้งหมด</CardTitle>
+              <CardDescription>จัดการคำถาม ตัวเลือก และคำตอบที่ถูกต้อง</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+                {questions.map((q, index) => (
+                  <QuestionEditor 
+                      key={q.id}
+                      index={index}
+                      question={q}
+                      updateQuestion={updateQuestion}
+                      removeQuestion={removeQuestion}
+                  />
+              ))}
+              
+              <Button variant="outline" onClick={addQuestion}>
+                  <PlusCircle className="mr-2 h-4 w-4"/> เพิ่มคำถามใหม่
+              </Button>
+          </CardContent>
+      </Card>
+      
+      <div className="flex justify-end gap-2">
+          <Link href="/admin/dashboard">
+              <Button variant="outline">ยกเลิก</Button>
+          </Link>
+          <Button onClick={handleSaveChanges}>บันทึกการเปลี่ยนแปลง</Button>
       </div>
     </div>
     </div>
