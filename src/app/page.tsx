@@ -185,7 +185,7 @@ export default function LoginPage() {
 
                 <div className={cn("transition-opacity duration-300", showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
                     <div className="flex flex-col space-y-4">
-                        <Button onClick={handleGoogleLogin} variant="outline" className="h-12 text-base font-bold" disabled={isLoading}>
+                        <Button onClick={handleGoogleLogin} variant="secondary" className="h-12 text-base font-bold" disabled={isLoading}>
                             {isLoading && !showAdminLogin ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (

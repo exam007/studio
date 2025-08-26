@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 const isUserRegistered = (email: string | null): boolean => {
@@ -34,6 +34,7 @@ const isUserRegistered = (email: string | null): boolean => {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
+    const pathname = usePathname();
     const { user, loading } = useAuth();
     const isAdmin = user && user.email === 'narongtorn.s@attorney285.co.th';
     
@@ -68,10 +69,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )
     }
 
+    const isActive = (path: string) => {
+        return pathname === path;
+    };
+
     return (
         <SidebarProvider>
             <div className="flex min-h-screen">
-                <Sidebar variant="inset" side="left">
+                <Sidebar variant="sidebar" side="left" collapsible="icon">
                     <SidebarHeader>
                         <div className="flex items-center gap-2 p-2 justify-center">
                            <BookOpen className="w-8 h-8 text-sidebar-primary"/>
@@ -82,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <Link href="/dashboard" passHref>
-                                    <SidebarMenuButton tooltip="หน้าหลัก" size="lg" isActive>
+                                    <SidebarMenuButton tooltip="หน้าหลัก" size="lg" isActive={isActive("/dashboard")}>
                                         <Home />
                                         <span>หน้าหลัก</span>
                                     </SidebarMenuButton>
@@ -91,7 +96,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                              {isAdmin && (
                                 <SidebarMenuItem>
                                     <Link href="/admin/dashboard" passHref>
-                                        <SidebarMenuButton tooltip="กลับไปหน้า Admin" size="lg">
+                                        <SidebarMenuButton tooltip="กลับไปหน้า Admin" size="lg" isActive={isActive("/admin/dashboard")}>
                                             <LayoutDashboard />
                                             <span>กลับไปหน้า Admin</span>
                                         </SidebarMenuButton>
@@ -111,21 +116,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <div className="flex flex-1 flex-col">
-                    <header className="flex items-center justify-between p-4 sm:p-6 bg-card border-b">
-                        <SidebarTrigger />
-                        <div className="flex items-center gap-4">
-                            <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src={user?.photoURL || "https://placehold.co/40x40"} alt="User avatar" data-ai-hint="user avatar" />
-                                <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                            </Avatar>
-                        </div>
-                    </header>
-                    <main className="flex-1 bg-background">
-                        <div className="p-4 sm:p-6 lg:p-8">
-                             {children}
-                        </div>
+                <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8">
+                    <main className="flex-1 bg-card rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+                         <header className="flex items-center justify-between mb-8">
+                            <SidebarTrigger />
+                            <div className="flex items-center gap-4">
+                                <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={user?.photoURL || "https://placehold.co/40x40"} alt="User avatar" data-ai-hint="user avatar"/>
+                                    <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                                </Avatar>
+                            </div>
+                        </header>
+                        {children}
                     </main>
                 </div>
             </div>

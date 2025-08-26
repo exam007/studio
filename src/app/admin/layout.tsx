@@ -89,7 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
         <SidebarProvider>
             <div className="flex min-h-screen">
-                <Sidebar variant="inset" side="left">
+                <Sidebar variant="sidebar" side="left" collapsible="icon">
                     <SidebarHeader>
                         <div className="flex items-center gap-2 p-2 justify-center">
                            <LayoutDashboard className="w-8 h-8 text-sidebar-primary"/>
@@ -148,25 +148,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <div className="flex-1 flex flex-col">
-                     <header className="flex items-center justify-between p-4 sm:p-6 bg-card border-b">
-                        <SidebarTrigger />
-                        <div className="flex items-center gap-4">
-                            <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src="https://placehold.co/40x40.png" alt="Admin avatar" data-ai-hint="admin avatar" />
-                                <AvatarFallback>A</AvatarFallback>
-                            </Avatar>
-                        </div>
-                    </header>
-                    <main className="flex-1 bg-background">
-                         <div className="p-4 sm:p-6 lg:p-8">
-                            <div className="mb-8">
-                                <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
-                                <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
+                <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8">
+                     <main className="flex-1 bg-card rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+                         <header className="flex items-center justify-between mb-8">
+                            <SidebarTrigger />
+                            <div className="flex items-center gap-4">
+                                <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src="https://placehold.co/40x40.png" alt="Admin avatar" data-ai-hint="admin avatar"/>
+                                    <AvatarFallback>A</AvatarFallback>
+                                </Avatar>
                             </div>
-                            {children}
+                        </header>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
+                            <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
                         </div>
+                        {children}
                     </main>
                 </div>
             </div>
