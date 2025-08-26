@@ -721,14 +721,16 @@ export function DashboardContent() {
 
   return (
     <div className="animate-in fade-in-50">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div>
+            <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
+            <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
+            </div>
         </div>
+        
+        {renderContent()}
       </div>
-      
-      {renderContent()}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

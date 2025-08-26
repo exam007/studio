@@ -112,7 +112,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarFooter>
                 </Sidebar>
                 <SidebarInset>
-                     <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+                     <div className="w-full p-4 sm:p-6 lg:p-8">
                         <header className="flex items-center justify-between border-b pb-4 mb-8">
                             <SidebarTrigger />
                             <div className="flex items-center gap-4">

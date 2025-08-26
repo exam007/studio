@@ -38,7 +38,7 @@ export default function UserDashboardPage() {
 
 
     return (
-        <div className="animate-in fade-in-50">
+        <div className="animate-in fade-in-50 max-w-7xl mx-auto">
             <div className="mb-8 text-center">
                 <h1 className="text-3xl font-headline font-bold">เลือกวิชาเพื่อเริ่มทำข้อสอบ</h1>
                 <p className="text-muted-foreground mt-2">เลือกวิชาที่คุณต้องการทดสอบความรู้ได้จากด้านล่างนี้</p>
