@@ -2,63 +2,72 @@
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, LogOut, BookOpen, User, LayoutDashboard, Loader2, Eye } from "lucide-react";
+import { Home, LogOut, BookOpen, LayoutDashboard, Loader2 } from "lucide-react";
 import Link from 'next/link';
 import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { useEffect } from "react";
+import { auth, db } from "@/lib/firebase";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { ref, get, child } from "firebase/database";
 
-const isUserRegistered = (email: string | null): boolean => {
-    if (typeof window === 'undefined' || !email) return false;
-
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("user_")) {
-            const item = localStorage.getItem(key);
-            if(item){
-                try {
-                    const storedUser = JSON.parse(item);
-                    if (storedUser.email && storedUser.email.toLowerCase() === email.toLowerCase()) {
-                        return true;
-                    }
-                } catch(e) {
-                    console.error("Failed to parse user from localStorage", e);
-                }
-            }
+const isUserRegistered = async (email: string | null): Promise<boolean> => {
+    if (!email) return false;
+    try {
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, 'users'));
+        if (snapshot.exists()) {
+            const users = snapshot.val();
+            return Object.values(users).some((user: any) => user.email.toLowerCase() === email.toLowerCase());
         }
+        return false;
+    } catch (error) {
+        console.error("Error checking registration:", error);
+        return false;
     }
-    return false;
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const { user, loading } = useAuth();
-    const isAdmin = user && user.email === 'narongtorn.s@attorney285.co.th';
-    
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isAuthorized, setIsAuthorized] = useState(false);
+
     useEffect(() => {
-        if (!loading) {
-            // If no user is logged in, redirect to login page.
-            if (!user) {
-                router.push('/');
-                return;
+        const checkAuthorization = async () => {
+            if (!loading) {
+                if (!user) {
+                    router.push('/');
+                    return;
+                }
+                
+                const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
+                setIsAdmin(adminStatus);
+                
+                if (adminStatus) {
+                    setIsAuthorized(true);
+                } else {
+                    const registered = await isUserRegistered(user.email);
+                    if (registered) {
+                        setIsAuthorized(true);
+                    } else {
+                        router.push('/');
+                    }
+                }
             }
-            // If the user is not an admin, check if they are a registered user.
-            // If not registered, redirect them.
-            if (!isAdmin && !isUserRegistered(user.email)) {
-                 router.push('/');
-            }
-        }
-    }, [user, loading, router, isAdmin]);
+        };
+
+        checkAuthorization();
+    }, [user, loading, router]);
+
 
     const handleLogout = async () => {
         await signOut(auth);
         router.push('/');
     };
 
-    if (loading || !user) {
+    if (loading || !isAuthorized) {
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">

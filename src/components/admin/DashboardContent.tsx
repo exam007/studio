@@ -7,22 +7,23 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
+import { ref, onValue, set, remove, get, child } from "firebase/database";
+import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  FileUp, Users, HelpCircle, Upload, ShieldCheck,
-  MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle, Check, X, UserCheck
+  Upload, ShieldCheck,
+  MoreHorizontal, Edit, Trash2, FilePenLine, PlusCircle, Check, X
 } from "lucide-react";
 import type { Question, Option } from '@/app/admin/edit-exam/[id]/page';
 
@@ -363,46 +364,36 @@ export function DashboardContent() {
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
 
-  const refreshDataFromLocalStorage = () => {
-    try {
-        const storedExams: Exam[] = [];
-        let storedUsers: UserProfile[] = [];
-
-        const storedRequests = localStorage.getItem("pending_requests");
-        setPendingRequests(storedRequests ? JSON.parse(storedRequests) : []);
-
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith('exam_details_')) {
-                const exam = JSON.parse(localStorage.getItem(key)!);
-                const questions = JSON.parse(localStorage.getItem(`exam_questions_${exam.id}`) || '[]');
-                exam.questionCount = questions.length;
-                exam.year = exam.year || new Date().getFullYear() + 543;
-                storedExams.push(exam);
-            } else if (key?.startsWith('user_')) {
-                storedUsers.push(JSON.parse(localStorage.getItem(key)!));
-            }
-        }
-        
-        setExams(storedExams);
-        setUsers(storedUsers);
-    } catch (error) {
-        console.error("Could not load data from localStorage", error);
-        toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถโหลดข้อมูลที่บันทึกไว้ได้", variant: "destructive" });
-    }
-  };
-
-
   useEffect(() => {
-    refreshDataFromLocalStorage();
-    
-    // Listen for storage changes to keep tabs in sync
-    const handleStorageChange = () => {
-        refreshDataFromLocalStorage();
-    };
-    window.addEventListener('storage', handleStorageChange);
+    // Fetch Exams
+    const examsRef = ref(db, 'exams/');
+    const unsubscribeExams = onValue(examsRef, (snapshot) => {
+        const data = snapshot.val();
+        const loadedExams = data ? Object.values(data) : [];
+        setExams(loadedExams as Exam[]);
+    });
+
+    // Fetch Users
+    const usersRef = ref(db, 'users/');
+    const unsubscribeUsers = onValue(usersRef, (snapshot) => {
+        const data = snapshot.val();
+        const loadedUsers = data ? Object.values(data) : [];
+        setUsers(loadedUsers as UserProfile[]);
+    });
+
+    // Fetch Requests
+    const requestsRef = ref(db, 'requests/');
+    const unsubscribeRequests = onValue(requestsRef, (snapshot) => {
+        const data = snapshot.val();
+        const loadedRequests = data ? Object.values(data) : [];
+        setPendingRequests(loadedRequests as PendingRequest[]);
+    });
+
+    // Cleanup subscriptions on unmount
     return () => {
-        window.removeEventListener('storage', handleStorageChange);
+        unsubscribeExams();
+        unsubscribeUsers();
+        unsubscribeRequests();
     };
   }, []);
 
@@ -453,10 +444,7 @@ export function DashboardContent() {
               year: new Date().getFullYear() + 543,
             };
             
-            localStorage.setItem(`exam_details_${newExam.id}`, JSON.stringify(newExam));
-            localStorage.setItem(`exam_questions_${newExam.id}`, JSON.stringify(questions));
-            
-            refreshDataFromLocalStorage();
+            set(ref(db, `exams/${newExam.id}`), { ...newExam, questions });
 
             toast({
               title: "อัปโหลดไฟล์สำเร็จ",
@@ -475,15 +463,19 @@ export function DashboardContent() {
     event.target.value = '';
   };
   
-  const handleDeleteExam = (examId: string) => {
-    localStorage.removeItem(`exam_details_${examId}`);
-    localStorage.removeItem(`exam_questions_${examId}`);
-    localStorage.removeItem(`permissions_${examId}`); 
-    refreshDataFromLocalStorage();
-    toast({
-        title: "ลบข้อสอบสำเร็จ",
-        description: `ข้อสอบรหัส ${examId} ถูกลบออกจากระบบแล้ว`,
-    })
+  const handleDeleteExam = async (examId: string) => {
+    try {
+        await remove(ref(db, `exams/${examId}`));
+        // Also remove permissions associated with the exam
+        await remove(ref(db, `permissions/${examId}`));
+        toast({
+            title: "ลบข้อสอบสำเร็จ",
+            description: `ข้อสอบรหัส ${examId} ถูกลบออกจากระบบแล้ว`,
+        });
+    } catch (error) {
+        console.error("Error deleting exam:", error);
+        toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถลบข้อสอบได้", variant: "destructive"});
+    }
   }
 
   const handleOpenEditDialog = (exam: Exam) => {
@@ -494,7 +486,7 @@ export function DashboardContent() {
     setIsEditDialogOpen(true);
   }
 
-  const handleSaveExamChanges = () => {
+  const handleSaveExamChanges = async () => {
     if(!examToEdit || !newExamName.trim()) return;
 
     const time = parseInt(newExamTime, 10);
@@ -509,17 +501,32 @@ export function DashboardContent() {
         return;
     }
     
-    const updatedExam = { ...examToEdit, name: newExamName.trim(), timeInMinutes: time, year: year };
-    localStorage.setItem(`exam_details_${examToEdit.id}`, JSON.stringify(updatedExam));
-    refreshDataFromLocalStorage();
-    
-    toast({
-        title: "แก้ไขสำเร็จ",
-        description: `อัปเดตข้อมูลข้อสอบ "${newExamName.trim()}" เรียบร้อยแล้ว`,
-    });
-    
-    setIsEditDialogOpen(false);
-    setExamToEdit(null);
+    const updatedExamDetails = { 
+        name: newExamName.trim(), 
+        timeInMinutes: time, 
+        year: year 
+    };
+
+    try {
+        const examRef = ref(db, `exams/${examToEdit.id}`);
+        const snapshot = await get(examRef);
+        if (snapshot.exists()) {
+            const currentExamData = snapshot.val();
+            const updatedExam = { ...currentExamData, ...updatedExamDetails };
+            await set(examRef, updatedExam);
+            toast({
+                title: "แก้ไขสำเร็จ",
+                description: `อัปเดตข้อมูลข้อสอบ "${newExamName.trim()}" เรียบร้อยแล้ว`,
+            });
+            setIsEditDialogOpen(false);
+            setExamToEdit(null);
+        } else {
+             throw new Error("Exam not found");
+        }
+    } catch (error) {
+        console.error("Error saving exam changes:", error);
+        toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถบันทึกการเปลี่ยนแปลงได้", variant: "destructive"});
+    }
   }
   
   const handleEditQuestions = (examId: string) => {
@@ -530,22 +537,26 @@ export function DashboardContent() {
     router.push(`/admin/permissions/${examId}`);
   };
 
-  const handleCreateNewExam = () => {
+  const handleCreateNewExam = async () => {
     const newExamId = uuidv4();
-    const newExam: Exam = {
+    const newExamData = {
       id: newExamId,
       name: `ข้อสอบใหม่ ${exams.length + 1}`,
       questionCount: 0,
       timeInMinutes: 20,
       year: new Date().getFullYear() + 543,
+      questions: [],
     };
-    localStorage.setItem(`exam_details_${newExamId}`, JSON.stringify(newExam));
-    localStorage.setItem(`exam_questions_${newExamId}`, JSON.stringify([]));
-    refreshDataFromLocalStorage();
-    router.push(`/admin/edit-exam/${newExamId}`);
+    try {
+      await set(ref(db, `exams/${newExamId}`), newExamData);
+      router.push(`/admin/edit-exam/${newExamId}`);
+    } catch (error) {
+       console.error("Error creating new exam:", error);
+       toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถสร้างข้อสอบใหม่ได้", variant: "destructive"});
+    }
   };
 
-  const handleAddNewUser = () => {
+  const handleAddNewUser = async () => {
     if (!newUserName.trim() || !newUserEmail.trim()) {
         toast({
             title: "ข้อมูลไม่ครบถ้วน",
@@ -565,48 +576,48 @@ export function DashboardContent() {
         return;
     }
 
+    const newUserId = uuidv4();
     const newUser: UserProfile = {
-        id: uuidv4(),
+        id: newUserId,
         name: newUserName.trim(),
         email: newUserEmail.trim().toLowerCase(),
         avatar: `https://placehold.co/40x40.png?text=${newUserName.trim().charAt(0)}`,
     };
     
-    localStorage.setItem(`user_${newUser.id}`, JSON.stringify(newUser));
-    refreshDataFromLocalStorage();
-
-    toast({
-        title: "เพิ่มสมาชิกสำเร็จ",
-        description: `เพิ่มคุณ ${newUser.name} (${newUser.email}) เข้าระบบแล้ว`,
-    });
-    
-    setNewUserName("");
-    setNewUserEmail("");
-    setIsAddUserDialogOpen(false);
+    try {
+        await set(ref(db, `users/${newUserId}`), newUser);
+        toast({
+            title: "เพิ่มสมาชิกสำเร็จ",
+            description: `เพิ่มคุณ ${newUser.name} (${newUser.email}) เข้าระบบแล้ว`,
+        });
+        setNewUserName("");
+        setNewUserEmail("");
+        setIsAddUserDialogOpen(false);
+    } catch (error) {
+        console.error("Error adding new user:", error);
+        toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถเพิ่มสมาชิกใหม่ได้", variant: "destructive"});
+    }
   }
 
-  const handleDeleteUser = (userId: string) => {
-      localStorage.removeItem(`user_${userId}`);
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if(key && key.startsWith('permissions_')) {
-            const permissions = JSON.parse(localStorage.getItem(key)!);
-            const updatedPermissions = permissions.filter((id: string) => id !== userId);
-            localStorage.setItem(key, JSON.stringify(updatedPermissions));
-        }
+  const handleDeleteUser = async (userId: string) => {
+      try {
+        await remove(ref(db, `users/${userId}`));
+        // You might also want to remove this user from any exam permissions.
+        // This is a more complex operation and depends on your data structure.
+        toast({
+            title: "ลบผู้ใช้สำเร็จ",
+            description: "ผู้ใช้ถูกลบออกจากระบบแล้ว",
+        });
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถลบผู้ใช้ได้", variant: "destructive"});
       }
-      refreshDataFromLocalStorage();
-      toast({
-          title: "ลบผู้ใช้สำเร็จ",
-          description: "ผู้ใช้ถูกลบออกจากระบบแล้ว",
-      });
   }
 
-  const handleApproveRequest = (request: PendingRequest) => {
+  const handleApproveRequest = async (request: PendingRequest) => {
     if (users.some(u => u.email.toLowerCase() === request.email.toLowerCase())) {
         toast({ title: "ผู้ใช้อยู่ในระบบแล้ว", description: `ผู้ใช้ ${request.displayName} ได้รับการอนุมัติแล้วก่อนหน้านี้`, variant: "default" });
-        handleRejectRequest(request.uid, false); 
+        await handleRejectRequest(request.uid, false); 
         return;
     }
 
@@ -617,27 +628,32 @@ export function DashboardContent() {
       avatar: request.photoURL,
     };
     
-    localStorage.setItem(`user_${newUser.id}`, JSON.stringify(newUser));
-    handleRejectRequest(request.uid, false);
-    refreshDataFromLocalStorage();
-
-    toast({
-        title: "อนุมัติสำเร็จ",
-        description: `ผู้ใช้ ${request.displayName} ได้รับการอนุมัติแล้ว`,
-    });
+    try {
+        await set(ref(db, `users/${newUser.id}`), newUser);
+        await handleRejectRequest(request.uid, false); // Remove the request after approval
+        toast({
+            title: "อนุมัติสำเร็จ",
+            description: `ผู้ใช้ ${request.displayName} ได้รับการอนุมัติแล้ว`,
+        });
+    } catch(error) {
+        console.error("Error approving request:", error);
+        toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถอนุมัติคำขอได้", variant: "destructive"});
+    }
   };
 
-  const handleRejectRequest = (uid: string, showToast = true) => {
-    const updatedRequests = pendingRequests.filter(req => req.uid !== uid);
-    localStorage.setItem('pending_requests', JSON.stringify(updatedRequests));
-    refreshDataFromLocalStorage();
-    
-    if (showToast) {
-        toast({
-            title: "ปฏิเสธคำขอ",
-            description: "คำขอของผู้ใช้ถูกปฏิเสธแล้ว",
-            variant: "destructive"
-        });
+  const handleRejectRequest = async (uid: string, showToast = true) => {
+    try {
+        await remove(ref(db, `requests/${uid}`));
+        if (showToast) {
+            toast({
+                title: "ปฏิเสธคำขอ",
+                description: "คำขอของผู้ใช้ถูกปฏิเสธแล้ว",
+                variant: "destructive"
+            });
+        }
+    } catch(error) {
+        console.error("Error rejecting request:", error);
+        toast({ title: "เกิดข้อผิดพลาด", description: "ไม่สามารถปฏิเสธคำขอได้", variant: "destructive"});
     }
   };
 
@@ -769,5 +785,3 @@ export function DashboardContent() {
     </div>
   );
 }
-
-    

@@ -8,15 +8,9 @@ import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
-
-type PendingRequest = {
-    uid: string;
-    email: string;
-    displayName: string;
-    photoURL: string;
-};
+import { ref, onValue } from "firebase/database";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -35,6 +29,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
     }, [user, loading, router]);
 
+    useEffect(() => {
+        const requestsRef = ref(db, 'requests/');
+        const unsubscribe = onValue(requestsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setPendingCount(Object.keys(snapshot.val()).length);
+            } else {
+                setPendingCount(0);
+            }
+        });
+        
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, []);
+
     const handleLogout = async () => {
         await signOut(auth);
         router.push('/');
@@ -50,27 +58,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
         return pathname.startsWith(path) && !tab;
     };
-
-     useEffect(() => {
-        const checkPendingRequests = () => {
-            if (typeof window === 'undefined') return;
-            const storedRequests = localStorage.getItem("pending_requests");
-            if (storedRequests) {
-                const requests: PendingRequest[] = JSON.parse(storedRequests);
-                setPendingCount(requests.length);
-            } else {
-                setPendingCount(0);
-            }
-        };
-
-        checkPendingRequests();
-        
-        window.addEventListener('storage', checkPendingRequests);
-
-        return () => {
-            window.removeEventListener('storage', checkPendingRequests);
-        };
-    }, []);
 
     if (loading || !user) {
         return (
@@ -145,7 +132,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <div className="flex flex-1 flex-col">
+                <div className="flex-1 flex flex-col">
                      <header className="flex h-14 items-center justify-between border-b bg-card px-4 sm:px-6">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">

@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
-import { AlertCircle, BookOpen, Loader2, Shield } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { AlertCircle, Loader2, Shield } from "lucide-react";
+import { auth, db } from "@/lib/firebase";
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ref, get, set, child } from "firebase/database";
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -24,34 +24,32 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
   );
 
-const isUserRegistered = (email: string | null): boolean => {
-    if (typeof window === 'undefined' || !email) return false;
-
-    // Admin is not a registered user in this context, they have their own login
+const isUserRegistered = async (email: string | null): Promise<boolean> => {
+    if (!email) return false;
+    
+    // Admin is not a "registered user" in the database, they have a special login.
     if (email === 'narongtorn.s@attorney285.co.th') return false;
 
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("user_")) {
-            const item = localStorage.getItem(key);
-            if(item){
-                try {
-                    const storedUser = JSON.parse(item);
-                    if (storedUser.email && storedUser.email.toLowerCase() === email.toLowerCase()) {
-                        return true;
-                    }
-                } catch(e) {
-                    console.error("Failed to parse user from localStorage", e);
-                }
-            }
+    try {
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, 'users'));
+        if (snapshot.exists()) {
+            const users = snapshot.val();
+            // Find a user whose email matches, case-insensitively
+            const foundUser = Object.values(users).find((user: any) => 
+                user.email.toLowerCase() === email.toLowerCase()
+            );
+            return !!foundUser;
         }
+        return false;
+    } catch (error) {
+        console.error("Error checking user registration in Firebase DB:", error);
+        return false;
     }
-    return false;
 };
 
 export default function LoginPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const { user, loading } = useAuth();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -63,25 +61,31 @@ export default function LoginPage() {
   const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
+    const checkUserStatus = async () => {
+      if (!loading && user) {
         const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
         if (isAdmin) {
           router.push('/admin/dashboard');
         } else {
-            const isRegistered = isUserRegistered(user.email);
+            const isRegistered = await isUserRegistered(user.email);
             if (isRegistered) {
                 router.push('/dashboard');
             } else {
-                signOut(auth).then(() => {
-                    setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล");
-                });
+                // This user is logged in via Firebase Auth but not in our DB.
+                // This can happen if they were removed from the DB by the admin.
+                // We log them out and show an error.
+                await signOut(auth);
+                setLoginError("บัญชีของคุณไม่ได้อยู่ในระบบอีกต่อไป โปรดติดต่อผู้ดูแล");
             }
         }
+        setIsCheckingUser(false);
+      } else if (!loading && !user) {
+        setIsCheckingUser(false);
       }
-      setIsCheckingUser(false);
-    }
+    };
+    checkUserStatus();
   }, [user, loading, router]);
+
 
   const handleLoginAttempt = () => {
     setLoginError(null);
@@ -93,33 +97,31 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      const loggedInUser = result.user;
-      
-      const isRegistered = isUserRegistered(loggedInUser.email);
-      
-      if (isRegistered) {
-          router.push('/dashboard');
-      } else {
-        setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล");
-        
-        const pendingRequest = {
-            uid: loggedInUser.uid,
-            email: loggedInUser.email,
-            displayName: loggedInUser.displayName,
-            photoURL: loggedInUser.photoURL,
-        };
-        const existingRequests = JSON.parse(localStorage.getItem("pending_requests") || "[]");
-        
-        if (!existingRequests.some((req: any) => req.uid === pendingRequest.uid)) {
-            const updatedRequests = [...existingRequests, pendingRequest];
-            localStorage.setItem("pending_requests", JSON.stringify(updatedRequests));
-            window.dispatchEvent(new Event('storage'));
-        }
-
-        await signOut(auth);
-      }
+      // The useEffect hook will handle redirection once the `user` state is updated.
     } catch (error: any) {
-        if (error.code !== 'auth/popup-closed-by-user') {
+        // If login via popup fails or is cancelled, check if the user is registered.
+        // If not, create a request. This logic is now handled inside the useEffect.
+        // Here we just handle the immediate login error.
+        const loggedInUser = auth.currentUser || (error.customData ? error.customData.user : null);
+
+        if (loggedInUser) {
+             const isRegistered = await isUserRegistered(loggedInUser.email);
+             if (!isRegistered) {
+                setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล");
+                
+                const pendingRequest = {
+                    uid: loggedInUser.uid,
+                    email: loggedInUser.email,
+                    displayName: loggedInUser.displayName,
+                    photoURL: loggedInUser.photoURL,
+                };
+                
+                // Add request to Firebase DB
+                await set(ref(db, `requests/${loggedInUser.uid}`), pendingRequest);
+
+                await signOut(auth);
+             }
+        } else if (error.code !== 'auth/popup-closed-by-user') {
             setLoginError(`เกิดข้อผิดพลาดในการล็อกอิน: ${error.message}`);
         }
     } finally {
@@ -138,15 +140,11 @@ export default function LoginPage() {
         if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
              router.push('/admin/dashboard');
         } else {
-             await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+             setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         }
     } catch(error: any) {
         console.error(error);
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-            setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-        } else {
-            setLoginError(`เกิดข้อผิดพลาด: ${error.message}`);
-        }
+        setLoginError(`เกิดข้อผิดพลาด: ${error.message}`);
     } finally {
         setIsLoading(false);
     }
@@ -243,5 +241,3 @@ export default function LoginPage() {
         </main>
     );
 }
-
-    
