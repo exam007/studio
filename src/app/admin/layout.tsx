@@ -17,19 +17,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user, loading } = useAuth();
+    const [isAuthorized, setIsAuthorized] = useState(false);
 
     const [pendingCount, setPendingCount] = useState(0);
     
     useEffect(() => {
-        if (!loading) {
-            if (!user) {
-                router.push('/');
-                return;
-            }
-            const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
-            if (!isAdmin) {
-                router.push('/');
-            }
+        if (loading) return;
+
+        // Check for special admin session
+        const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+        if (isAdminSession) {
+            setIsAuthorized(true);
+            return;
+        }
+
+        // Standard Firebase auth check
+        if (!user) {
+            router.push('/');
+            return;
+        }
+        const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
+        if (!isAdmin) {
+            router.push('/');
+        } else {
+            setIsAuthorized(true);
         }
     }, [user, loading, router]);
 
@@ -37,17 +48,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const requestsRef = ref(db, 'requests/');
         const unsubscribe = onValue(requestsRef, (snapshot) => {
             if (snapshot.exists()) {
-                setPendingCount(Object.keys(snapshot.val()).length);
+                const pendingRequests = snapshot.val();
+                setPendingCount(Object.keys(pendingRequests).length);
             } else {
                 setPendingCount(0);
             }
         });
         
-        // Cleanup subscription on unmount
         return () => unsubscribe();
     }, []);
 
     const handleLogout = async () => {
+        sessionStorage.removeItem('isAdminLoggedIn');
         await signOut(auth);
         router.push('/');
     };
@@ -63,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return pathname.startsWith(path) && !tab;
     };
 
-    if (loading || !user) {
+    if (loading || !isAuthorized) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">

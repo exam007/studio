@@ -14,8 +14,8 @@ import { ref, get, child } from "firebase/database";
 const isUserRegistered = async (email: string | null): Promise<boolean> => {
     if (!email) return false;
     try {
-        const dbRef = ref(db);
-        const snapshot = await get(child(dbRef, 'users'));
+        const usersRef = ref(db, 'users');
+        const snapshot = await get(usersRef);
         if (snapshot.exists()) {
             const users = snapshot.val();
             return Object.values(users).some((user: any) => user.email.toLowerCase() === email.toLowerCase());
@@ -36,24 +36,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     useEffect(() => {
         const checkAuthorization = async () => {
-            if (!loading) {
-                if (!user) {
-                    router.push('/');
-                    return;
-                }
-                
-                const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
-                setIsAdmin(adminStatus);
-                
-                if (adminStatus) {
+            if (loading) return;
+
+            if (!user) {
+                router.push('/');
+                return;
+            }
+            
+            const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
+            setIsAdmin(adminStatus);
+            
+            if (adminStatus) {
+                setIsAuthorized(true);
+            } else {
+                const registered = await isUserRegistered(user.email);
+                if (registered) {
                     setIsAuthorized(true);
                 } else {
-                    const registered = await isUserRegistered(user.email);
-                    if (registered) {
-                        setIsAuthorized(true);
-                    } else {
-                        router.push('/');
-                    }
+                    // Log out user if not admin and not registered
+                    await signOut(auth);
+                    router.push('/');
                 }
             }
         };

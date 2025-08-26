@@ -31,11 +31,10 @@ const isUserRegistered = async (email: string | null): Promise<boolean> => {
     if (email === 'narongtorn.s@attorney285.co.th') return false;
 
     try {
-        const dbRef = ref(db);
-        const snapshot = await get(child(dbRef, 'users'));
+        const usersRef = ref(db, 'users');
+        const snapshot = await get(usersRef);
         if (snapshot.exists()) {
             const users = snapshot.val();
-            // Find a user whose email matches, case-insensitively
             const foundUser = Object.values(users).find((user: any) => 
                 user.email.toLowerCase() === email.toLowerCase()
             );
@@ -62,26 +61,33 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkUserStatus = async () => {
-      if (!loading && user) {
-        const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
-        if (isAdmin) {
-          router.push('/admin/dashboard');
-        } else {
-            const isRegistered = await isUserRegistered(user.email);
-            if (isRegistered) {
-                router.push('/dashboard');
-            } else {
-                // This user is logged in via Firebase Auth but not in our DB.
-                // This can happen if they were removed from the DB by the admin.
-                // We log them out and show an error.
-                await signOut(auth);
-                setLoginError("บัญชีของคุณไม่ได้อยู่ในระบบอีกต่อไป โปรดติดต่อผู้ดูแล");
-            }
+        if (loading) return;
+
+        // Special check for admin session from password login
+        const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+        if (isAdminSession) {
+            router.push('/admin/dashboard');
+            setIsCheckingUser(false);
+            return;
         }
-        setIsCheckingUser(false);
-      } else if (!loading && !user) {
-        setIsCheckingUser(false);
-      }
+        
+        if (user) {
+            const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
+            if (isAdmin) {
+              router.push('/admin/dashboard');
+            } else {
+                const isRegistered = await isUserRegistered(user.email);
+                if (isRegistered) {
+                    router.push('/dashboard');
+                } else {
+                    await signOut(auth);
+                    setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
+                }
+            }
+            setIsCheckingUser(false);
+        } else {
+            setIsCheckingUser(false);
+        }
     };
     checkUserStatus();
   }, [user, loading, router]);
@@ -99,26 +105,25 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       // The useEffect hook will handle redirection once the `user` state is updated.
     } catch (error: any) {
-        // If login via popup fails or is cancelled, check if the user is registered.
-        // If not, create a request. This logic is now handled inside the useEffect.
-        // Here we just handle the immediate login error.
         const loggedInUser = auth.currentUser || (error.customData ? error.customData.user : null);
 
         if (loggedInUser) {
              const isRegistered = await isUserRegistered(loggedInUser.email);
              if (!isRegistered) {
-                setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล");
+                setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแลเพื่อขอสิทธิ์");
                 
-                const pendingRequest = {
-                    uid: loggedInUser.uid,
-                    email: loggedInUser.email,
-                    displayName: loggedInUser.displayName,
-                    photoURL: loggedInUser.photoURL,
-                };
-                
-                // Add request to Firebase DB
-                await set(ref(db, `requests/${loggedInUser.uid}`), pendingRequest);
+                const requestRef = ref(db, `requests/${loggedInUser.uid}`);
+                const requestSnapshot = await get(requestRef);
 
+                if (!requestSnapshot.exists()){
+                    const pendingRequest = {
+                        uid: loggedInUser.uid,
+                        email: loggedInUser.email,
+                        displayName: loggedInUser.displayName,
+                        photoURL: loggedInUser.photoURL,
+                    };
+                    await set(requestRef, pendingRequest);
+                }
                 await signOut(auth);
              }
         } else if (error.code !== 'auth/popup-closed-by-user') {
@@ -137,12 +142,9 @@ export default function LoginPage() {
     }
     handleLoginAttempt();
     
-    // Hardcoded admin check
     if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
-        // Since we don't need a real auth session for this special login,
-        // we can just navigate. The admin layout will handle authorization.
-        // In a real production app, you'd still want a proper session.
-         router.push('/admin/dashboard');
+        sessionStorage.setItem('isAdminLoggedIn', 'true');
+        router.push('/admin/dashboard');
     } else {
          setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
          setIsLoading(false);
