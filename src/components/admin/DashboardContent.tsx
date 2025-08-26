@@ -721,11 +721,6 @@ export function DashboardContent() {
 
   return (
     <div className="animate-in fade-in-50">
-      <div className="mb-8">
-        <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
-      </div>
-        
       {renderContent()}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

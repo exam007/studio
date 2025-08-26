@@ -148,23 +148,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <SidebarInset>
-                    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
-                        <header className="flex items-center justify-between mb-8">
-                            <SidebarTrigger />
-                            <div className="flex items-center gap-4">
-                                <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src="https://placehold.co/40x40.png" alt="Admin avatar" data-ai-hint="admin avatar" />
-                                    <AvatarFallback>A</AvatarFallback>
-                                </Avatar>
+                <div className="flex flex-col flex-1">
+                     <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8 bg-card border-b">
+                        <SidebarTrigger />
+                        <div className="flex items-center gap-4">
+                            <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src="https://placehold.co/40x40.png" alt="Admin avatar" data-ai-hint="admin avatar" />
+                                <AvatarFallback>A</AvatarFallback>
+                            </Avatar>
+                        </div>
+                    </header>
+                    <SidebarInset>
+                         <main className="p-4 sm:p-6 lg:p-8">
+                            <div className="max-w-7xl mx-auto">
+                                <div className="mb-8">
+                                    <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
+                                    <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
+                                </div>
+                                {children}
                             </div>
-                        </header>
-                        <main>
-                            {children}
                         </main>
-                    </div>
-                </SidebarInset>
+                    </SidebarInset>
+                </div>
             </div>
         </SidebarProvider>
     );
