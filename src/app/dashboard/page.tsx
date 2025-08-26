@@ -38,12 +38,12 @@ export default function UserDashboardPage() {
 
 
     return (
-        <div className="animate-in fade-in-50">
+        <div className="max-w-7xl mx-auto animate-in fade-in-50">
              <div className="mb-8">
                 <h1 className="text-3xl font-headline font-bold">เลือกวิชาเพื่อเริ่มทำข้อสอบ</h1>
                 <p className="text-muted-foreground mt-2">เลือกวิชาที่คุณต้องการทดสอบความรู้ได้จากด้านล่างนี้</p>
             </div>
-            <div className="max-w-7xl mx-auto">
+            <div>
                 {allQuizzes.length > 0 ? (
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {allQuizzes.map(quiz => (
