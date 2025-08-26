@@ -85,8 +85,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <SidebarProvider>
-            <div className="flex min-h-screen">
-                <Sidebar variant="sidebar" side="left" collapsible="icon">
+            <div className="flex min-h-screen w-full">
+                <Sidebar variant="sidebar" side="left" collapsible="icon" className="bg-sidebar text-sidebar-foreground">
                     <SidebarHeader>
                         <div className="flex items-center gap-2 p-4 justify-center">
                            <LayoutDashboard className="w-6 h-6 text-sidebar-primary"/>
@@ -97,7 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <Link href="/admin/dashboard?tab=exams" passHref>
-                                    <SidebarMenuButton tooltip="Dashboard" size="lg" isActive={isActive('/admin/dashboard', 'exams')}>
+                                    <SidebarMenuButton tooltip="Dashboard" size="lg" isActive={isActive('/admin/dashboard', 'exams')} className="group-data-[collapsible=icon]:justify-center">
                                         <FileUp />
                                         <span className="group-data-[collapsible=icon]:hidden">จัดการข้อสอบ</span>
                                     </SidebarMenuButton>
@@ -105,7 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </SidebarMenuItem>
                              <SidebarMenuItem>
                                 <Link href="/admin/dashboard?tab=users" passHref>
-                                    <SidebarMenuButton tooltip="จัดการผู้ใช้" size="lg" isActive={isActive('/admin/dashboard', 'users')}>
+                                    <SidebarMenuButton tooltip="จัดการผู้ใช้" size="lg" isActive={isActive('/admin/dashboard', 'users')} className="group-data-[collapsible=icon]:justify-center">
                                         <Users />
                                         <span className="group-data-[collapsible=icon]:hidden">จัดการผู้ใช้</span>
                                     </SidebarMenuButton>
@@ -113,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </SidebarMenuItem>
                             <SidebarMenuItem>
                                 <Link href="/admin/dashboard?tab=requests" passHref>
-                                    <SidebarMenuButton tooltip="คำขออนุมัติ" size="lg" isActive={isActive('/admin/dashboard', 'requests')}>
+                                    <SidebarMenuButton tooltip="คำขออนุมัติ" size="lg" isActive={isActive('/admin/dashboard', 'requests')} className="group-data-[collapsible=icon]:justify-center">
                                         <div className="relative">
                                             <UserCheck />
                                             {pendingCount > 0 && (
@@ -126,7 +126,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </SidebarMenuItem>
                              <SidebarMenuItem>
                                 <Link href="/dashboard" passHref>
-                                    <SidebarMenuButton tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'}>
+                                    <SidebarMenuButton tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'} className="group-data-[collapsible=icon]:justify-center">
                                         <Eye />
                                         <span className="group-data-[collapsible=icon]:hidden">มุมมองผู้ใช้</span>
                                     </SidebarMenuButton>
@@ -137,7 +137,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <SidebarFooter>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Logout" size="lg" onClick={handleLogout}>
+                                <SidebarMenuButton tooltip="Logout" size="lg" onClick={handleLogout} className="group-data-[collapsible=icon]:justify-center">
                                     <LogOut />
                                     <span className="group-data-[collapsible=icon]:hidden">Logout</span>
                                 </SidebarMenuButton>
@@ -145,8 +145,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <div className="flex-1 flex flex-col">
-                     <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8 bg-card border-b">
+                <div className="flex flex-1 flex-col">
+                     <header className="flex h-14 items-center justify-between border-b bg-card px-4 sm:px-6">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
                             <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
@@ -156,7 +156,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </Avatar>
                         </div>
                     </header>
-                    <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                    <main className="flex-1 overflow-auto bg-muted/30 p-4 sm:p-6">
                         {children}
                     </main>
                 </div>
