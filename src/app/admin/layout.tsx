@@ -91,8 +91,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex min-h-screen">
                 <Sidebar variant="sidebar" side="left" collapsible="icon">
                     <SidebarHeader>
-                        <div className="flex items-center gap-2 p-2 justify-center">
-                           <LayoutDashboard className="w-8 h-8 text-sidebar-primary"/>
+                        <div className="flex items-center gap-2 p-4 justify-center">
+                           <LayoutDashboard className="w-6 h-6 text-sidebar-primary"/>
                            <h2 className="text-2xl font-headline font-semibold text-sidebar-primary group-data-[collapsible=icon]:hidden">Admin</h2>
                         </div>
                     </SidebarHeader>
