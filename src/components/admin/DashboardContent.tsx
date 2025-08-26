@@ -630,6 +630,14 @@ export function DashboardContent() {
       email: request.email,
       avatar: request.photoURL,
     };
+    
+    // Check if user already exists to prevent duplicates
+    if (users.some(u => u.email.toLowerCase() === newUser.email.toLowerCase())) {
+        toast({ title: "ผู้ใช้อยู่ในระบบแล้ว", description: `ผู้ใช้ ${request.displayName} ได้รับการอนุมัติแล้วก่อนหน้านี้`, variant: "default" });
+        handleRejectRequest(request.uid, false); // Silently remove the request
+        return;
+    }
+
     const updatedUsers = [...users, newUser];
     setUsers(updatedUsers);
     localStorage.setItem(`user_${newUser.id}`, JSON.stringify(newUser));
@@ -785,3 +793,5 @@ export function DashboardContent() {
     </div>
   );
 }
+
+    
