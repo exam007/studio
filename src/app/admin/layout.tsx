@@ -148,7 +148,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <div className="flex flex-1 flex-col">
+                <div className="flex-1 flex flex-col">
                      <header className="flex items-center justify-between p-4 sm:p-6 bg-card border-b">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
@@ -159,12 +159,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </Avatar>
                         </div>
                     </header>
-                    <main className="flex-1 bg-background p-4 sm:p-6 lg:p-8">
-                        <div className="mb-8">
-                            <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
-                            <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
+                    <main className="flex-1 bg-background">
+                         <div className="p-4 sm:p-6 lg:p-8">
+                            <div className="mb-8">
+                                <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
+                                <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
+                            </div>
+                            {children}
                         </div>
-                        {children}
                     </main>
                 </div>
             </div>

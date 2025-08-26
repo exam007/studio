@@ -122,8 +122,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </Avatar>
                         </div>
                     </header>
-                    <main className="flex-1 bg-background p-4 sm:p-6 lg:p-8">
-                        {children}
+                    <main className="flex-1 bg-background">
+                        <div className="p-4 sm:p-6 lg:p-8">
+                             {children}
+                        </div>
                     </main>
                 </div>
             </div>
