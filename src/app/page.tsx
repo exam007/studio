@@ -136,17 +136,16 @@ export default function LoginPage() {
         return;
     }
     handleLoginAttempt();
-    try {
-        if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
-             router.push('/admin/dashboard');
-        } else {
-             setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-        }
-    } catch(error: any) {
-        console.error(error);
-        setLoginError(`เกิดข้อผิดพลาด: ${error.message}`);
-    } finally {
-        setIsLoading(false);
+    
+    // Hardcoded admin check
+    if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
+        // Since we don't need a real auth session for this special login,
+        // we can just navigate. The admin layout will handle authorization.
+        // In a real production app, you'd still want a proper session.
+         router.push('/admin/dashboard');
+    } else {
+         setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+         setIsLoading(false);
     }
   }
 
