@@ -367,7 +367,6 @@ export function DashboardContent() {
     try {
         const storedExams: Exam[] = [];
         let storedUsers: UserProfile[] = [];
-        let hasUsers = false;
 
         const storedRequests = localStorage.getItem("pending_requests");
         setPendingRequests(storedRequests ? JSON.parse(storedRequests) : []);
@@ -378,24 +377,11 @@ export function DashboardContent() {
                 const exam = JSON.parse(localStorage.getItem(key)!);
                 const questions = JSON.parse(localStorage.getItem(`exam_questions_${exam.id}`) || '[]');
                 exam.questionCount = questions.length;
-                // Add default year for backward compatibility
                 exam.year = exam.year || new Date().getFullYear() + 543;
                 storedExams.push(exam);
             } else if (key?.startsWith('user_')) {
-                hasUsers = true;
                 storedUsers.push(JSON.parse(localStorage.getItem(key)!));
             }
-        }
-        
-        if (!hasUsers) {
-            const defaultUser: UserProfile = {
-                id: uuidv4(),
-                name: "Narongtorn S.",
-                email: "narongtorn.s@attorney285.co.th",
-                avatar: `https://placehold.co/40x40.png?text=N`,
-            };
-            localStorage.setItem(`user_${defaultUser.id}`, JSON.stringify(defaultUser));
-            storedUsers = [defaultUser];
         }
         
         setExams(storedExams);
@@ -407,9 +393,17 @@ export function DashboardContent() {
   };
 
 
-  // Load data from localStorage on initial render
   useEffect(() => {
     refreshDataFromLocalStorage();
+    
+    // Listen for storage changes to keep tabs in sync
+    const handleStorageChange = () => {
+        refreshDataFromLocalStorage();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleUploadClick = () => {
@@ -428,7 +422,6 @@ export function DashboardContent() {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             
-            // Start from the second row (index 1) to skip header
             const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
             
             const newExamId = uuidv4();
@@ -441,12 +434,11 @@ export function DashboardContent() {
                     { id: uuidv4(), text: String(row[5] || '') },
                 ].filter(opt => opt.text);
 
-                // Find the correct option object to get its id
                 const correctOption = options.find(opt => opt.text === String(row[6] || ''));
 
                 return {
                     id: uuidv4(),
-                    type: 'mcq', // Assuming all questions from excel are mcq
+                    type: 'mcq', 
                     text: String(row[1] || ''),
                     options: options,
                     correctAnswer: correctOption ? correctOption.id : ''
@@ -455,16 +447,16 @@ export function DashboardContent() {
 
             const newExam: Exam = {
               id: newExamId,
-              name: file.name.replace(/\.[^/.]+$/, ""), // Use filename as exam name
+              name: file.name.replace(/\.[^/.]+$/, ""),
               questionCount: questions.length,
-              timeInMinutes: 30, // Default time
+              timeInMinutes: 30, 
               year: new Date().getFullYear() + 543,
             };
             
-            const updatedExams = [...exams, newExam];
-            setExams(updatedExams);
             localStorage.setItem(`exam_details_${newExam.id}`, JSON.stringify(newExam));
             localStorage.setItem(`exam_questions_${newExam.id}`, JSON.stringify(questions));
+            
+            refreshDataFromLocalStorage();
 
             toast({
               title: "อัปโหลดไฟล์สำเร็จ",
@@ -484,11 +476,10 @@ export function DashboardContent() {
   };
   
   const handleDeleteExam = (examId: string) => {
-    const updatedExams = exams.filter(exam => exam.id !== examId)
-    setExams(updatedExams);
     localStorage.removeItem(`exam_details_${examId}`);
     localStorage.removeItem(`exam_questions_${examId}`);
-    localStorage.removeItem(`permissions_${examId}`); // Also remove permissions
+    localStorage.removeItem(`permissions_${examId}`); 
+    refreshDataFromLocalStorage();
     toast({
         title: "ลบข้อสอบสำเร็จ",
         description: `ข้อสอบรหัส ${examId} ถูกลบออกจากระบบแล้ว`,
@@ -519,12 +510,9 @@ export function DashboardContent() {
     }
     
     const updatedExam = { ...examToEdit, name: newExamName.trim(), timeInMinutes: time, year: year };
-    const updatedExams = exams.map(exam => 
-        exam.id === examToEdit.id ? updatedExam : exam
-    );
-    setExams(updatedExams);
     localStorage.setItem(`exam_details_${examToEdit.id}`, JSON.stringify(updatedExam));
-
+    refreshDataFromLocalStorage();
+    
     toast({
         title: "แก้ไขสำเร็จ",
         description: `อัปเดตข้อมูลข้อสอบ "${newExamName.trim()}" เรียบร้อยแล้ว`,
@@ -548,14 +536,12 @@ export function DashboardContent() {
       id: newExamId,
       name: `ข้อสอบใหม่ ${exams.length + 1}`,
       questionCount: 0,
-      timeInMinutes: 20, // Default time
+      timeInMinutes: 20,
       year: new Date().getFullYear() + 543,
     };
-    const updatedExams = [...exams, newExam];
-    setExams(updatedExams);
     localStorage.setItem(`exam_details_${newExamId}`, JSON.stringify(newExam));
-    // Also create an empty questions array
     localStorage.setItem(`exam_questions_${newExamId}`, JSON.stringify([]));
+    refreshDataFromLocalStorage();
     router.push(`/admin/edit-exam/${newExamId}`);
   };
 
@@ -569,7 +555,6 @@ export function DashboardContent() {
         return;
     }
     
-    // Check for duplicate email
     const isDuplicate = users.some(user => user.email.toLowerCase() === newUserEmail.trim().toLowerCase());
     if (isDuplicate) {
         toast({
@@ -587,9 +572,8 @@ export function DashboardContent() {
         avatar: `https://placehold.co/40x40.png?text=${newUserName.trim().charAt(0)}`,
     };
     
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
     localStorage.setItem(`user_${newUser.id}`, JSON.stringify(newUser));
+    refreshDataFromLocalStorage();
 
     toast({
         title: "เพิ่มสมาชิกสำเร็จ",
@@ -602,11 +586,8 @@ export function DashboardContent() {
   }
 
   const handleDeleteUser = (userId: string) => {
-      const updatedUsers = users.filter(user => user.id !== userId);
-      setUsers(updatedUsers);
       localStorage.removeItem(`user_${userId}`);
 
-      // Also remove user's permissions from all exams
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if(key && key.startsWith('permissions_')) {
@@ -615,7 +596,7 @@ export function DashboardContent() {
             localStorage.setItem(key, JSON.stringify(updatedPermissions));
         }
       }
-
+      refreshDataFromLocalStorage();
       toast({
           title: "ลบผู้ใช้สำเร็จ",
           description: "ผู้ใช้ถูกลบออกจากระบบแล้ว",
@@ -623,7 +604,12 @@ export function DashboardContent() {
   }
 
   const handleApproveRequest = (request: PendingRequest) => {
-    // Add to users list
+    if (users.some(u => u.email.toLowerCase() === request.email.toLowerCase())) {
+        toast({ title: "ผู้ใช้อยู่ในระบบแล้ว", description: `ผู้ใช้ ${request.displayName} ได้รับการอนุมัติแล้วก่อนหน้านี้`, variant: "default" });
+        handleRejectRequest(request.uid, false); 
+        return;
+    }
+
     const newUser: UserProfile = {
       id: request.uid,
       name: request.displayName,
@@ -631,19 +617,10 @@ export function DashboardContent() {
       avatar: request.photoURL,
     };
     
-    // Check if user already exists to prevent duplicates
-    if (users.some(u => u.email.toLowerCase() === newUser.email.toLowerCase())) {
-        toast({ title: "ผู้ใช้อยู่ในระบบแล้ว", description: `ผู้ใช้ ${request.displayName} ได้รับการอนุมัติแล้วก่อนหน้านี้`, variant: "default" });
-        handleRejectRequest(request.uid, false); // Silently remove the request
-        return;
-    }
-
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
     localStorage.setItem(`user_${newUser.id}`, JSON.stringify(newUser));
+    handleRejectRequest(request.uid, false);
+    refreshDataFromLocalStorage();
 
-    // Remove from pending list
-    handleRejectRequest(request.uid, false); // silent rejection
     toast({
         title: "อนุมัติสำเร็จ",
         description: `ผู้ใช้ ${request.displayName} ได้รับการอนุมัติแล้ว`,
@@ -652,10 +629,9 @@ export function DashboardContent() {
 
   const handleRejectRequest = (uid: string, showToast = true) => {
     const updatedRequests = pendingRequests.filter(req => req.uid !== uid);
-    setPendingRequests(updatedRequests);
     localStorage.setItem('pending_requests', JSON.stringify(updatedRequests));
-     // Manually trigger storage event for other tabs like the sidebar
-    window.dispatchEvent(new Event('storage'));
+    refreshDataFromLocalStorage();
+    
     if (showToast) {
         toast({
             title: "ปฏิเสธคำขอ",

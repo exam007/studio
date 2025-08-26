@@ -69,14 +69,10 @@ export default function LoginPage() {
         if (isAdmin) {
           router.push('/admin/dashboard');
         } else {
-            // This case is for an already-logged-in registered user.
-            // Let's ensure they are registered before redirecting.
             const isRegistered = isUserRegistered(user.email);
             if (isRegistered) {
                 router.push('/dashboard');
             } else {
-                // If they are logged in but not registered (e.g., old session),
-                // sign them out and show an error.
                 signOut(auth).then(() => {
                     setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล");
                 });
@@ -102,11 +98,8 @@ export default function LoginPage() {
       const isRegistered = isUserRegistered(loggedInUser.email);
       
       if (isRegistered) {
-          // If registered, redirect to dashboard.
-          // The useEffect hook will also catch this, but this makes it faster.
           router.push('/dashboard');
       } else {
-        // If not registered, show error, add to pending requests, and sign out.
         setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแล");
         
         const pendingRequest = {
@@ -116,11 +109,10 @@ export default function LoginPage() {
             photoURL: loggedInUser.photoURL,
         };
         const existingRequests = JSON.parse(localStorage.getItem("pending_requests") || "[]");
-        // Avoid adding duplicate requests
+        
         if (!existingRequests.some((req: any) => req.uid === pendingRequest.uid)) {
             const updatedRequests = [...existingRequests, pendingRequest];
             localStorage.setItem("pending_requests", JSON.stringify(updatedRequests));
-             // Manually trigger storage event for other tabs like the sidebar
             window.dispatchEvent(new Event('storage'));
         }
 
@@ -144,21 +136,9 @@ export default function LoginPage() {
     handleLoginAttempt();
     try {
         if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
-             // Bypass Firebase auth for this specific hardcoded admin
-            const mockUser = {
-                email: adminEmail,
-            };
-            // Simulate auth state for redirection, then redirect
-            // This is a simplified approach; in a real app, a proper session would be better.
-            await signInWithEmailAndPassword(auth, adminEmail, adminPassword).catch(() => {
-                // This might fail if user is not in Firebase Auth, but we can ignore it
-                // and proceed with our custom logic. The main goal is the redirect.
-            });
              router.push('/admin/dashboard');
-
         } else {
              await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-             // After this, the useEffect hook will handle the redirect if successful.
         }
     } catch(error: any) {
         console.error(error);
