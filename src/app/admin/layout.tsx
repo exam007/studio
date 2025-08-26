@@ -1,3 +1,4 @@
+
 "use client"
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -148,21 +149,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </SidebarFooter>
                 </Sidebar>
                 <SidebarInset>
-                     <div className="w-full p-4 sm:p-6 lg:p-8">
-                         <header className="flex items-center justify-between mb-8">
-                            <SidebarTrigger />
-                            <div className="flex items-center gap-4">
-                                <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src="https://placehold.co/40x40.png" alt="Admin avatar" data-ai-hint="admin avatar" />
-                                    <AvatarFallback>A</AvatarFallback>
-                                </Avatar>
-                            </div>
-                        </header>
-                        <main>
-                            {children}
-                        </main>
-                    </div>
+                    <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8">
+                        <SidebarTrigger />
+                        <div className="flex items-center gap-4">
+                            <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src="https://placehold.co/40x40.png" alt="Admin avatar" data-ai-hint="admin avatar" />
+                                <AvatarFallback>A</AvatarFallback>
+                            </Avatar>
+                        </div>
+                    </header>
+                    <main className="p-4 sm:p-6 lg:p-8 pt-0">
+                        {children}
+                    </main>
                 </SidebarInset>
             </div>
         </SidebarProvider>
