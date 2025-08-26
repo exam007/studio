@@ -50,46 +50,32 @@ export type PendingRequest = {
 };
 
 const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, handleDeleteExam, fileInputRef, handleFileChange, handleUploadClick, handleCreateNewExam, handleManagePermissions }: any) => (
-    <Card>
+     <Card>
         <CardHeader>
-          <CardTitle>รายการข้อสอบ</CardTitle>
-          <CardDescription>เพิ่ม, แก้ไข, หรือลบข้อสอบในระบบ</CardDescription>
-          <div className="flex flex-col sm:flex-row items-stretch gap-2 pt-2">
-            <Input placeholder="ค้นหาด้วยรหัสข้อสอบ..." className="w-full" />
-            
-            <div className="flex items-center gap-2">
-                 <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" size="icon" className="flex-shrink-0">
-                        <HelpCircle className="h-4 w-4" />
-                        <span className="sr-only">ดูตัวอย่างไฟล์</span>
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-96">
-                        <div className="space-y-2">
-                        <h4 className="font-medium leading-none">ตัวอย่างฟอร์แมตไฟล์ Sheet</h4>
-                        <p className="text-sm text-muted-foreground">
-                            คอลัมน์ควรเรียงลำดับดังนี้: A=ข้อ, B=คำถาม, C-F=ตัวเลือก, G=เฉลย, H=คำอธิบาย
-                        </p>
-                        <Image src="https://placehold.co/600x400.png" alt="Sheet format example" width={600} height={400} className="rounded-md border" data-ai-hint="spreadsheet table"/>
-                        </div>
-                    </PopoverContent>
-                </Popover>
-                <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-                />
-                <Button onClick={handleUploadClick} variant="outline" className="w-full">
-                <Upload className="mr-2 h-4 w-4" /> อัปโหลดไฟล์
-                </Button>
-                <Button onClick={handleCreateNewExam} className="w-full">
-                  <PlusCircle className="mr-2 h-4 w-4" /> สร้างข้อสอบใหม่
-                </Button>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <CardTitle>รายการข้อสอบ</CardTitle>
+                    <CardDescription>เพิ่ม, แก้ไข, หรือลบข้อสอบในระบบ</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button onClick={handleCreateNewExam}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> สร้างข้อสอบใหม่
+                    </Button>
+                    <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                    />
+                    <Button onClick={handleUploadClick} variant="outline">
+                    <Upload className="mr-2 h-4 w-4" /> อัปโหลดไฟล์
+                    </Button>
+                </div>
             </div>
-          </div>
+            <div className="flex items-center gap-2 pt-4">
+                <Input placeholder="ค้นหาด้วยรหัสข้อสอบ..." className="w-full" />
+            </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -671,51 +657,69 @@ export function DashboardContent() {
     }
   };
 
-
   const renderContent = () => {
     switch (currentTab) {
         case 'exams':
-            return <ExamsTabContent 
-                exams={exams} 
-                handleOpenEditDialog={handleOpenEditDialog} 
-                handleEditQuestions={handleEditQuestions} 
-                handleDeleteExam={handleDeleteExam} 
-                fileInputRef={fileInputRef} 
-                handleFileChange={handleFileChange} 
-                handleUploadClick={handleUploadClick} 
-                handleCreateNewExam={handleCreateNewExam}
-                handleManagePermissions={handleManagePermissions}
-                />;
+            return (
+            <div className="space-y-6">
+                <h1 className="text-3xl font-headline font-bold">จัดการข้อสอบ</h1>
+                <ExamsTabContent 
+                    exams={exams} 
+                    handleOpenEditDialog={handleOpenEditDialog} 
+                    handleEditQuestions={handleEditQuestions} 
+                    handleDeleteExam={handleDeleteExam} 
+                    fileInputRef={fileInputRef} 
+                    handleFileChange={handleFileChange} 
+                    handleUploadClick={handleUploadClick} 
+                    handleCreateNewExam={handleCreateNewExam}
+                    handleManagePermissions={handleManagePermissions}
+                />
+            </div>
+            );
         case 'users':
-            return <UsersTabContent 
-                users={users} _
-                isAddUserDialogOpen={isAddUserDialogOpen} 
-                setIsAddUserDialogOpen={setIsAddUserDialogOpen} 
-                handleAddNewUser={handleAddNewUser}
-                newUserName={newUserName} 
-                setNewUserName={setNewUserName}
-                newUserEmail={newUserEmail}
-                setNewUserEmail={setNewUserEmail}
-                handleDeleteUser={handleDeleteUser}
-                />;
+            return (
+            <div className="space-y-6">
+                <h1 className="text-3xl font-headline font-bold">จัดการผู้ใช้</h1>
+                <UsersTabContent 
+                    users={users}
+                    isAddUserDialogOpen={isAddUserDialogOpen} 
+                    setIsAddUserDialogOpen={setIsAddUserDialogOpen} 
+                    handleAddNewUser={handleAddNewUser}
+                    newUserName={newUserName} 
+                    setNewUserName={setNewUserName}
+                    newUserEmail={newUserEmail}
+                    setNewUserEmail={setNewUserEmail}
+                    handleDeleteUser={handleDeleteUser}
+                />
+            </div>);
         case 'requests':
-            return <RequestsTabContent 
-                pendingRequests={pendingRequests}
-                handleApproveRequest={handleApproveRequest}
-                handleRejectRequest={handleRejectRequest}
-                />;
+            return (
+            <div className="space-y-6">
+                 <h1 className="text-3xl font-headline font-bold">คำขออนุมัติ</h1>
+                <RequestsTabContent 
+                    pendingRequests={pendingRequests}
+                    handleApproveRequest={handleApproveRequest}
+                    handleRejectRequest={handleRejectRequest}
+                />
+            </div>
+            );
         default:
-            return <ExamsTabContent 
-                exams={exams} 
-                handleOpenEditDialog={handleOpenEditDialog} _
-                handleEditQuestions={handleEditQuestions} 
-                handleDeleteExam={handleDeleteExam} 
-                fileInputRef={fileInputRef} 
-                handleFileChange={handleFileChange} 
-                handleUploadClick={handleUploadClick} 
-                handleCreateNewExam={handleCreateNewExam}
-                handleManagePermissions={handleManagePermissions}
-                />;
+             return (
+            <div className="space-y-6">
+                <h1 className="text-3xl font-headline font-bold">จัดการข้อสอบ</h1>
+                <ExamsTabContent 
+                    exams={exams} 
+                    handleOpenEditDialog={handleOpenEditDialog} 
+                    handleEditQuestions={handleEditQuestions} 
+                    handleDeleteExam={handleDeleteExam} 
+                    fileInputRef={fileInputRef} 
+                    handleFileChange={handleFileChange} 
+                    handleUploadClick={handleUploadClick} 
+                    handleCreateNewExam={handleCreateNewExam}
+                    handleManagePermissions={handleManagePermissions}
+                />
+            </div>
+            );
     }
   }
 

@@ -1,5 +1,6 @@
+
 "use client"
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LayoutDashboard, LogOut, FileUp, Users, Eye, UserCheck, Loader2 } from "lucide-react";
 import Link from 'next/link';
@@ -98,7 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 <Link href="/admin/dashboard?tab=exams" passHref>
                                     <SidebarMenuButton tooltip="Dashboard" size="lg" isActive={isActive('/admin/dashboard', 'exams')}>
                                         <FileUp />
-                                        <span>จัดการข้อสอบ</span>
+                                        <span className="group-data-[collapsible=icon]:hidden">จัดการข้อสอบ</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
@@ -106,7 +107,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 <Link href="/admin/dashboard?tab=users" passHref>
                                     <SidebarMenuButton tooltip="จัดการผู้ใช้" size="lg" isActive={isActive('/admin/dashboard', 'users')}>
                                         <Users />
-                                        <span>จัดการผู้ใช้</span>
+                                        <span className="group-data-[collapsible=icon]:hidden">จัดการผู้ใช้</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
@@ -119,7 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                                 <Badge className="absolute -right-2 -top-1 h-5 w-5 justify-center p-0 group-data-[collapsible=icon]:hidden">{pendingCount}</Badge>
                                             )}
                                         </div>
-                                        <span>คำขออนุมัติ</span>
+                                        <span className="group-data-[collapsible=icon]:hidden">คำขออนุมัติ</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
@@ -127,7 +128,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 <Link href="/dashboard" passHref>
                                     <SidebarMenuButton tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'}>
                                         <Eye />
-                                        <span>มุมมองผู้ใช้</span>
+                                        <span className="group-data-[collapsible=icon]:hidden">มุมมองผู้ใช้</span>
                                     </SidebarMenuButton>
                                 </Link>
                             </SidebarMenuItem>
@@ -138,7 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <SidebarMenuItem>
                                 <SidebarMenuButton tooltip="Logout" size="lg" onClick={handleLogout}>
                                     <LogOut />
-                                    <span>Logout</span>
+                                    <span className="group-data-[collapsible=icon]:hidden">Logout</span>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
@@ -156,10 +157,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </div>
                     </header>
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">
-                        <div className="mb-8">
-                            <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
-                            <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
-                        </div>
                         {children}
                     </main>
                 </div>
