@@ -120,7 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                         <div className="relative">
                                             <UserCheck />
                                             {pendingCount > 0 && (
-                                                <Badge className="absolute -right-2 -top-1 h-5 w-5 justify-center p-0">{pendingCount}</Badge>
+                                                <Badge className="absolute -right-2 -top-1 h-5 w-5 justify-center p-0 group-data-[collapsible=icon]:hidden">{pendingCount}</Badge>
                                             )}
                                         </div>
                                         <span>คำขออนุมัติ</span>
@@ -148,8 +148,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8">
-                     <main className="flex-1 bg-card rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+                <div className="flex-1 flex flex-col">
+                     <main className="flex-1 bg-card p-4 sm:p-6 lg:p-8">
                          <header className="flex items-center justify-between mb-8">
                             <SidebarTrigger />
                             <div className="flex items-center gap-4">

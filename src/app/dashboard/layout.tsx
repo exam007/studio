@@ -116,8 +116,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8">
-                    <main className="flex-1 bg-card rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+                <div className="flex-1 flex flex-col">
+                    <main className="flex-1 bg-card p-4 sm:p-6 lg:p-8">
                          <header className="flex items-center justify-between mb-8">
                             <SidebarTrigger />
                             <div className="flex items-center gap-4">
