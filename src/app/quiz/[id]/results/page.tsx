@@ -61,7 +61,7 @@ export default function QuizResultsPage() {
 
     return (
         <div className="flex flex-col items-center min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-            <Card className="w-full text-center shadow-2xl animate-in fade-in-50">
+            <Card className="w-full max-w-3xl text-center shadow-2xl animate-in fade-in-50">
                 <CardHeader>
                     <div className="flex justify-center mb-4">
                         <CheckCircle className="w-16 h-16 text-primary" />

@@ -98,7 +98,7 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="animate-in fade-in-50">
+    <div className="animate-in fade-in-50 max-w-7xl mx-auto">
         <div className="mb-6">
             <Link href="/admin/dashboard">
                 <Button variant="outline" size="sm" className="mb-4">

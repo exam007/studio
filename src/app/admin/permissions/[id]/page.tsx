@@ -89,7 +89,7 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
   };
 
   return (
-    <div className="animate-in fade-in-50">
+    <div className="animate-in fade-in-50 max-w-7xl mx-auto">
       <div className="mb-6">
         <Link href="/admin/dashboard?tab=exams">
             <Button variant="outline" size="sm" className="mb-4">
