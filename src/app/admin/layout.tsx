@@ -1,6 +1,5 @@
-
 "use client"
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LayoutDashboard, LogOut, FileUp, Users, Eye, UserCheck, Loader2 } from "lucide-react";
 import Link from 'next/link';
@@ -40,14 +39,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push('/');
     };
 
-
     const isActive = (path: string, tab?: string) => {
         const currentTab = searchParams.get('tab');
         if (path === '/admin/dashboard') {
             if (tab) {
                  return currentTab === tab;
             }
-            // Default to 'exams' if no tab is selected
             return !currentTab || currentTab === 'exams';
         }
         return pathname.startsWith(path) && !tab;
@@ -67,7 +64,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         checkPendingRequests();
         
-        // Listen for changes in localStorage from other tabs/windows
         window.addEventListener('storage', checkPendingRequests);
 
         return () => {
@@ -149,17 +145,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </SidebarFooter>
                 </Sidebar>
                 <div className="flex-1 flex flex-col">
-                     <main className="flex-1 bg-card p-4 sm:p-6 lg:p-8">
-                         <header className="flex items-center justify-between mb-8">
-                            <SidebarTrigger />
-                            <div className="flex items-center gap-4">
-                                <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src="https://placehold.co/40x40.png" alt="Admin avatar" data-ai-hint="admin avatar"/>
-                                    <AvatarFallback>A</AvatarFallback>
-                                </Avatar>
-                            </div>
-                        </header>
+                     <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8 bg-card border-b">
+                        <SidebarTrigger />
+                        <div className="flex items-center gap-4">
+                            <span className="font-medium text-sm hidden sm:inline">Welcome, Admin!</span>
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src="https://placehold.co/40x40.png" alt="Admin avatar" data-ai-hint="admin avatar"/>
+                                <AvatarFallback>A</AvatarFallback>
+                            </Avatar>
+                        </div>
+                    </header>
+                    <main className="flex-1 p-4 sm:p-6 lg:p-8">
                         <div className="mb-8">
                             <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
                             <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>

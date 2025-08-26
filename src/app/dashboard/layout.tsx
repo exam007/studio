@@ -117,17 +117,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarFooter>
                 </Sidebar>
                 <div className="flex-1 flex flex-col">
-                    <main className="flex-1 bg-card p-4 sm:p-6 lg:p-8">
-                         <header className="flex items-center justify-between mb-8">
-                            <SidebarTrigger />
-                            <div className="flex items-center gap-4">
-                                <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={user?.photoURL || "https://placehold.co/40x40"} alt="User avatar" data-ai-hint="user avatar"/>
-                                    <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                                </Avatar>
-                            </div>
-                        </header>
+                    <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8 bg-card border-b">
+                        <SidebarTrigger />
+                        <div className="flex items-center gap-4">
+                            <span className="font-medium text-sm hidden sm:inline">Welcome, {user?.displayName || 'User'}!</span>
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src={user?.photoURL || "https://placehold.co/40x40"} alt="User avatar" data-ai-hint="user avatar"/>
+                                <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                            </Avatar>
+                        </div>
+                    </header>
+                    <main className="flex-1 p-4 sm:p-6 lg:p-8">
                         {children}
                     </main>
                 </div>
