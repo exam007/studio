@@ -4,9 +4,12 @@
 import { QuizTaker } from "@/components/quiz/QuizTaker";
 import { BookOpen } from "lucide-react";
 import type { Question } from "@/app/admin/edit-exam/[id]/page";
-import type { Exam } from "@/components/admin/DashboardContent";
+import type { ExamDetails } from "@/app/admin/edit-exam/[id]/page";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { ref, get } from "firebase/database";
+import { db } from "@/lib/firebase";
+
 
 type QuizData = {
   id: string;
@@ -22,21 +25,22 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const examDetailsString = localStorage.getItem(`exam_details_${id}`);
-      const questionsString = localStorage.getItem(`exam_questions_${id}`);
-
-      if (examDetailsString && questionsString) {
-        const examDetails: Exam = JSON.parse(examDetailsString);
-        const questions: Question[] = JSON.parse(questionsString);
-
-        setQuizData({
-          id: examDetails.id,
-          title: examDetails.name,
-          timeInMinutes: examDetails.timeInMinutes,
-          questions: questions,
+        const examRef = ref(db, `exams/${id}`);
+        get(examRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                const examDetails: ExamDetails = snapshot.val();
+                setQuizData({
+                    id: examDetails.id,
+                    title: examDetails.name,
+                    timeInMinutes: examDetails.timeInMinutes,
+                    questions: examDetails.questions || [],
+                });
+            }
+            setLoading(false);
+        }).catch((error) => {
+            console.error(error);
+            setLoading(false);
         });
-      }
-      setLoading(false);
     }
   }, [id]);
 

@@ -22,8 +22,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     
     useEffect(() => {
         if (!loading) {
-            const isAdmin = user && user.email === 'narongtorn.s@attorney285.co.th';
-            if (!user || !isAdmin) {
+            if (!user) {
+                router.push('/');
+                return;
+            }
+            const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
+            if (!isAdmin) {
                 router.push('/');
             }
         }

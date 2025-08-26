@@ -10,6 +10,8 @@ import { Search, PlusCircle, Trash2, ArrowLeft, ShieldCheck } from "lucide-react
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { ref, onValue, set, get, child } from "firebase/database";
+import { db } from "@/lib/firebase";
 
 type User = {
   id: string;
@@ -23,7 +25,7 @@ type ExamDetails = {
 }
 
 export default function ManagePermissionsPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const { id } = params; // Exam ID
   const [examDetails, setExamDetails] = useState<ExamDetails | null>(null);
   const [usersWithPermission, setUsersWithPermission] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -31,28 +33,31 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
 
   useEffect(() => {
     // Load exam details
-    const storedExam = localStorage.getItem(`exam_details_${id}`);
-    if (storedExam) {
-        setExamDetails(JSON.parse(storedExam));
-    }
-    
-    // Load all users from localStorage
-    const storedAllUsers: User[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("user_")) {
-            const user = JSON.parse(localStorage.getItem(key)!);
-            storedAllUsers.push(user);
+    const examRef = ref(db, `exams/${id}`);
+    get(examRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            setExamDetails(snapshot.val());
         }
-    }
-    setAllUsers(storedAllUsers);
-    
-    // Load users who already have permission for this exam
-    const storedPermissions = localStorage.getItem(`permissions_${id}`);
-    if(storedPermissions) {
-        const userIdsWithPermission: string[] = JSON.parse(storedPermissions);
-        setUsersWithPermission(storedAllUsers.filter(u => userIdsWithPermission.includes(u.id)));
-    }
+    });
+
+    // Load all users from Firebase
+    const usersRef = ref(db, 'users');
+    onValue(usersRef, (snapshot) => {
+        const usersData = snapshot.val();
+        const loadedUsers = usersData ? Object.values(usersData) as User[] : [];
+        setAllUsers(loadedUsers);
+
+        // Load users who already have permission for this exam
+        const permissionsRef = ref(db, `permissions/${id}`);
+        onValue(permissionsRef, (permSnapshot) => {
+            if (permSnapshot.exists()) {
+                const userIdsWithPermission: string[] = permSnapshot.val();
+                setUsersWithPermission(loadedUsers.filter(u => userIdsWithPermission.includes(u.id)));
+            } else {
+                setUsersWithPermission([]);
+            }
+        });
+    });
 
   }, [id]);
 
@@ -76,7 +81,8 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
       
       setUsersWithPermission(updatedUsersWithPermission);
       const updatedUserIds = updatedUsersWithPermission.map(u => u.id);
-      localStorage.setItem(`permissions_${id}`, JSON.stringify(updatedUserIds));
+      const permissionsRef = ref(db, `permissions/${id}`);
+      set(permissionsRef, updatedUserIds);
       setNewUserEmails("");
     }
   };
@@ -85,7 +91,8 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
     const updatedUsers = usersWithPermission.filter(u => u.id !== userId);
     setUsersWithPermission(updatedUsers);
     const updatedUserIds = updatedUsers.map(u => u.id);
-    localStorage.setItem(`permissions_${id}`, JSON.stringify(updatedUserIds));
+    const permissionsRef = ref(db, `permissions/${id}`);
+    set(permissionsRef, updatedUserIds);
   };
 
   return (
@@ -168,5 +175,3 @@ export default function ManagePermissionsPage({ params }: { params: { id: string
     </div>
   );
 }
-
-    

@@ -7,33 +7,26 @@ import { FileText, Calendar, ArrowRight, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { ref, onValue } from "firebase/database";
+import { db } from "@/lib/firebase";
 
 type Exam = {
     id: string;
     name: string;
     questionCount: number;
-    year: number; // Changed from timeInMinutes
+    year: number; 
 }
 
 export default function UserDashboardPage() {
     const [allQuizzes, setAllQuizzes] = useState<Exam[]>([]);
 
     useEffect(() => {
-        // In a real app, this data would be fetched. Here we get it from localStorage.
-        const quizzes: Exam[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith("exam_details_")) {
-                const quizData = JSON.parse(localStorage.getItem(key)!);
-                // Add a default year if it doesn't exist for backward compatibility
-                const quiz: Exam = {
-                    ...quizData,
-                    year: quizData.year || new Date().getFullYear() + 543, // Convert to Buddhist year
-                };
-                quizzes.push(quiz);
-            }
-        }
-        setAllQuizzes(quizzes);
+        const quizzesRef = ref(db, 'exams/');
+        onValue(quizzesRef, (snapshot) => {
+            const data = snapshot.val();
+            const loadedQuizzes = data ? Object.values(data) as Exam[] : [];
+            setAllQuizzes(loadedQuizzes);
+        });
     }, []);
 
 

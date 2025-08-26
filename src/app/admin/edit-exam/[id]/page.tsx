@@ -9,6 +9,8 @@ import Link from "next/link";
 import { v4 as uuidv4 } from 'uuid';
 import { QuestionEditor } from "@/components/quiz/QuestionEditor";
 import { useToast } from "@/components/ui/use-toast";
+import { ref, onValue, set, get } from "firebase/database";
+import { db } from "@/lib/firebase";
 
 export type Option = {
     id: string;
@@ -23,27 +25,31 @@ export type Question = {
     correctAnswer: string;
 }
 
+export type ExamDetails = {
+    id: string;
+    name: string;
+    questionCount: number;
+    timeInMinutes: number;
+    year: number;
+    questions?: Question[];
+}
+
 export default function EditExamPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const { toast } = useToast();
-  const [examName, setExamName] = useState("");
+  const [examDetails, setExamDetails] = useState<ExamDetails | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
 
   useEffect(() => {
-    // Load exam details and questions from localStorage
-    const storedExamDetails = localStorage.getItem(`exam_details_${id}`);
-    const storedQuestions = localStorage.getItem(`exam_questions_${id}`);
-    
-    if (storedExamDetails) {
-        const examDetails = JSON.parse(storedExamDetails);
-        setExamName(examDetails.name);
-    } else {
-        setExamName(`ข้อสอบ ${id}`);
-    }
-
-    if (storedQuestions) {
-        setQuestions(JSON.parse(storedQuestions));
-    }
+    if (!id) return;
+    const examRef = ref(db, `exams/${id}`);
+    onValue(examRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            setExamDetails(data);
+            setQuestions(data.questions || []);
+        }
+    });
   }, [id]);
 
 
@@ -69,26 +75,26 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
     setQuestions(prev => prev.filter(q => q.id !== id));
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
+    if (!examDetails) return;
     try {
-        const examDetailsJSON = localStorage.getItem(`exam_details_${id}`);
-        if (!examDetailsJSON) {
-            throw new Error("Exam details not found!");
+        const examRef = ref(db, `exams/${id}`);
+        const snapshot = await get(examRef);
+        if (snapshot.exists()) {
+            const currentExamData = snapshot.val();
+            const updatedExam = {
+                ...currentExamData,
+                questionCount: questions.length,
+                questions: questions
+            };
+            await set(examRef, updatedExam);
+            toast({
+                title: "บันทึกสำเร็จ",
+                description: `ข้อสอบ "${examDetails.name}" ได้รับการบันทึกเรียบร้อยแล้ว`,
+            });
         }
-        const examDetails = JSON.parse(examDetailsJSON);
-        
-        // Update question count before saving
-        examDetails.questionCount = questions.length;
-
-        localStorage.setItem(`exam_details_${id}`, JSON.stringify(examDetails));
-        localStorage.setItem(`exam_questions_${id}`, JSON.stringify(questions));
-
-        toast({
-            title: "บันทึกสำเร็จ",
-            description: `ข้อสอบ "${examName}" ได้รับการบันทึกเรียบร้อยแล้ว`,
-        });
     } catch (error) {
-        console.error("Failed to save to localStorage", error);
+        console.error("Failed to save to Firebase", error);
         toast({
             title: "เกิดข้อผิดพลาด",
             description: "ไม่สามารถบันทึกการเปลี่ยนแปลงได้",
@@ -108,7 +114,7 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
           </Link>
           <h1 className="text-3xl font-headline font-bold">แก้ไขข้อสอบ</h1>
           <p className="text-muted-foreground mt-1">
-          คุณกำลังแก้ไขข้อสอบ: <span className="font-semibold text-primary">{examName} ({id})</span>
+          คุณกำลังแก้ไขข้อสอบ: <span className="font-semibold text-primary">{examDetails?.name} ({id})</span>
           </p>
     </div>
 
@@ -145,5 +151,3 @@ export default function EditExamPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
-
-    
