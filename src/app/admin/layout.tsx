@@ -1,5 +1,5 @@
 "use client"
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LayoutDashboard, LogOut, FileUp, Users, Eye, UserCheck, Loader2 } from "lucide-react";
 import Link from 'next/link';
@@ -147,7 +147,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
-                <div className="flex flex-col flex-1">
+                <div className="flex flex-1 flex-col">
                      <header className="flex items-center justify-between p-4 sm:p-6 bg-card border-b">
                         <SidebarTrigger />
                         <div className="flex items-center gap-4">
@@ -158,15 +158,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </Avatar>
                         </div>
                     </header>
-                    <SidebarInset>
-                         <main className="p-4 sm:p-6 lg:p-8">
-                            <div className="mb-8">
-                                <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
-                                <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
-                            </div>
-                            {children}
-                        </main>
-                    </SidebarInset>
+                    <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background">
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
+                            <p className="text-muted-foreground mt-1">จัดการข้อสอบ, สิทธิ์การเข้าถึง, และผู้ใช้งาน</p>
+                        </div>
+                        {children}
+                    </main>
                 </div>
             </div>
         </SidebarProvider>
