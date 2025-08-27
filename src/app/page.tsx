@@ -51,29 +51,29 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkUserStatus = async () => {
-        if (loading) return;
+        if (loading) {
+            return;
+        }
 
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
-        if (isAdminSession) {
-            router.push('/admin/dashboard');
-            return; 
-        }
-        
-        if (user) {
-            const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
-            if (isAdmin) {
-              router.push('/admin/dashboard');
-            } else {
-                const isRegistered = await isUserRegistered(user.uid);
-                if (isRegistered) {
-                    router.push('/dashboard');
-                } else {
+
+        if (user || isAdminSession) {
+             if (isAdminSession || (user && user.email === 'narongtorn.s@attorney285.co.th')) {
+                router.push('/admin/dashboard');
+             } else if (user) {
+                 const isRegistered = await isUserRegistered(user.uid);
+                 if (isRegistered) {
+                     router.push('/dashboard');
+                 } else {
                     await signOut(auth);
                     setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
                     setIsCheckingUser(false);
-                }
-            }
+                 }
+             } else {
+                 setIsCheckingUser(false);
+             }
         } else {
+            // Not logged in, show login page
             setIsCheckingUser(false);
         }
     };
@@ -235,7 +235,3 @@ export default function LoginPage() {
         </main>
     );
 }
-
-    
-
-    
