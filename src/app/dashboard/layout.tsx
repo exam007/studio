@@ -106,12 +106,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </SidebarMenuItem>
                              {isAdmin && (
                                 <SidebarMenuItem>
-                                    <Link href="/admin/dashboard" passHref>
-                                        <SidebarMenuButton tooltip="กลับไปหน้า Admin" size="lg" isActive={isActive("/admin/dashboard")} className="group-data-[collapsible=icon]:justify-center">
+                                    <SidebarMenuButton asChild tooltip="กลับไปหน้า Admin" size="lg" isActive={isActive("/admin/dashboard")} className="group-data-[collapsible=icon]:justify-center">
+                                        <Link href="/admin/dashboard">
                                             <LayoutDashboard />
                                             <span className="group-data-[collapsible=icon]:hidden">กลับไปหน้า Admin</span>
-                                        </SidebarMenuButton>
-                                    </Link>
+                                        </Link>
+                                    </SidebarMenuButton>
                                 </SidebarMenuItem>
                             )}
                         </SidebarMenu>
