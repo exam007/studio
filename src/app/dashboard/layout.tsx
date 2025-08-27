@@ -4,7 +4,7 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, S
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Home, LogOut, BookOpen, LayoutDashboard, Loader2 } from "lucide-react";
 import Link from 'next/link';
-import { signOut } from "firebase/auth";
+import { signOut, signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -32,13 +32,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     useEffect(() => {
         const checkAuthorization = async () => {
-            if (loading) return;
+            if (loading) {
+                return; // Wait until Firebase auth state is loaded
+            }
 
             if (!user) {
-                router.push('/');
+                router.push('/'); // No user, redirect to login
                 return;
             }
             
+            // If user object exists, proceed with authorization checks
             const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
             setIsAdmin(adminStatus);
             
@@ -49,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 if (registered) {
                     setIsAuthorized(true);
                 } else {
-                    // Log out user if not admin and not registered
+                    // Log out user if not admin and not registered in the database
                     await signOut(auth);
                     router.push('/');
                 }
@@ -62,8 +65,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const handleLogout = async () => {
         await signOut(auth);
+        sessionStorage.removeItem('isAdminLoggedIn'); // Also clear admin session
         router.push('/');
     };
+
+    const handleSwitchToAdminView = async () => {
+        // Ensure admin is logged in with session for seamless switch
+        sessionStorage.setItem('isAdminLoggedIn', 'true');
+        try {
+            await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
+        } catch (error) {
+            // This might fail if already signed in, which is okay.
+        }
+        router.push('/admin/dashboard');
+    }
 
     if (loading || !isAuthorized) {
          return (
@@ -102,11 +117,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </SidebarMenuItem>
                              {isAdmin && (
                                 <SidebarMenuItem>
-                                    <SidebarMenuButton asChild tooltip="กลับไปหน้า Admin" size="lg" isActive={isActive("/admin/dashboard")} className="group-data-[collapsible=icon]:justify-center">
-                                        <Link href="/admin/dashboard">
-                                            <LayoutDashboard />
-                                            <span className="group-data-[collapsible=icon]:hidden">กลับไปหน้า Admin</span>
-                                        </Link>
+                                    <SidebarMenuButton onClick={handleSwitchToAdminView} tooltip="กลับไปหน้า Admin" size="lg" isActive={isActive("/admin/dashboard")} className="group-data-[collapsible=icon]:justify-center">
+                                        <LayoutDashboard />
+                                        <span className="group-data-[collapsible=icon]:hidden">กลับไปหน้า Admin</span>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             )}

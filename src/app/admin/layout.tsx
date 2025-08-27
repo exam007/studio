@@ -27,24 +27,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         if (loading) return;
 
-        // Special check for admin session
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
         
-        // If there's a firebase user and it's the admin, they are authorized
-        if (user && user.email === 'narongtorn.s@attorney285.co.th') {
+        // If there is an admin session, they are authorized.
+        // We also check for the firebase user to cover cases where they switched from user view.
+        if (isAdminSession || (user && user.email === 'narongtorn.s@attorney285.co.th')) {
             setIsAuthorized(true);
-            return;
+        } else {
+             // Otherwise, if not loading and no user/session, redirect
+            router.push('/');
         }
-
-        // If there's a session but no firebase user, they are also authorized
-        if (isAdminSession) {
-            setIsAuthorized(true);
-            return;
-        }
-
-        // Otherwise, if not loading and no user/session, redirect
-        router.push('/');
-
     }, [user, loading, router]);
 
     useEffect(() => {
@@ -58,16 +50,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }, []);
 
     const handleLogout = async () => {
-        sessionStorage.removeItem('isAdminLoggedIn');
         await signOut(auth);
+        sessionStorage.removeItem('isAdminLoggedIn');
         router.push('/');
     };
 
     const handleViewAsUser = async () => {
         try {
-            if (user?.email !== 'narongtorn.s@attorney285.co.th') {
-                 await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
-            }
+            // We must sign in to create a consistent auth state for the user dashboard layout.
+            await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
             router.push('/dashboard?tab=all-quizzes');
         } catch (error) {
              toast({
@@ -145,7 +136,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 </Link>
                             </SidebarMenuItem>
                              <SidebarMenuItem>
-                                <SidebarMenuButton onClick={handleViewAsUser} tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'} className="group-data-[collapsible=icon]:justify-center">
+                                <SidebarMenuButton onClick={handleViewAsUser} tooltip="มุมมองผู้ใช้" size="lg" className="group-data-[collapsible=icon]:justify-center">
                                     <Eye />
                                     <span className="group-data-[collapsible=icon]:hidden">มุมมองผู้ใช้</span>
                                 </SidebarMenuButton>
