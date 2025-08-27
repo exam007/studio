@@ -126,12 +126,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 </Link>
                             </SidebarMenuItem>
                              <SidebarMenuItem>
-                                <Link href="/dashboard" passHref>
-                                    <SidebarMenuButton tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'} className="group-data-[collapsible=icon]:justify-center">
+                                <SidebarMenuButton asChild tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'} className="group-data-[collapsible=icon]:justify-center">
+                                    <Link href="/dashboard">
                                         <Eye />
                                         <span className="group-data-[collapsible=icon]:hidden">มุมมองผู้ใช้</span>
-                                    </SidebarMenuButton>
-                                </Link>
+                                    </Link>
+                                </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarContent>
