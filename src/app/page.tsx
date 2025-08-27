@@ -53,16 +53,8 @@ export default function LoginPage() {
     const checkUserStatus = async () => {
         if (loading) return;
 
-        // Special check for admin session from password login
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
         if (isAdminSession) {
-            if (!user) {
-                try {
-                    await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
-                } catch (e) {
-                     // Fails if already signed in, which is fine
-                }
-            }
             router.push('/admin/dashboard');
             return; 
         }
@@ -243,5 +235,7 @@ export default function LoginPage() {
         </main>
     );
 }
+
+    
 
     
