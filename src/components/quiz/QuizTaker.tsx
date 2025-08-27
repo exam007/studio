@@ -1,10 +1,10 @@
 
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -14,24 +14,20 @@ import { Clock, Eye, EyeOff, Loader2, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import type { Question } from "@/app/admin/edit-exam/[id]/page";
 
 type Quiz = {
     id: string;
     title: string;
     timeInMinutes: number;
-    questions: {
-        id: string;
-        type: 'mcq' | 'short' | 'tf';
-        text: string;
-        options?: { id: string, text: string }[];
-    }[];
+    questions: Question[];
 }
 
 type Answers = {
     [questionId: string]: string;
 }
 
-const Timer = ({ initialTimeInSeconds, onTimeUp, isVisible }: { initialTimeInSeconds: number, onTimeUp: () => void, isVisible: boolean }) => {
+const Timer = ({ initialTimeInSeconds, onTimeUp, isVisible, timeTakenRef }: { initialTimeInSeconds: number, onTimeUp: () => void, isVisible: boolean, timeTakenRef: React.MutableRefObject<number> }) => {
     const [timeLeft, setTimeLeft] = useState(initialTimeInSeconds);
     const progress = (timeLeft / initialTimeInSeconds) * 100;
 
@@ -41,10 +37,14 @@ const Timer = ({ initialTimeInSeconds, onTimeUp, isVisible }: { initialTimeInSec
             return;
         }
         const intervalId = setInterval(() => {
-            setTimeLeft(prevTime => prevTime - 1);
+            setTimeLeft(prevTime => {
+                const newTime = prevTime - 1;
+                timeTakenRef.current = initialTimeInSeconds - newTime;
+                return newTime;
+            });
         }, 1000);
         return () => clearInterval(intervalId);
-    }, [timeLeft, onTimeUp]);
+    }, [timeLeft, onTimeUp, initialTimeInSeconds, timeTakenRef]);
 
     if (!isVisible) return null;
 
@@ -56,7 +56,7 @@ const Timer = ({ initialTimeInSeconds, onTimeUp, isVisible }: { initialTimeInSec
             <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center text-lg font-semibold">
                     <Clock className="mr-2 h-5 w-5" />
-                    Time Left
+                    เวลาที่เหลือ
                 </div>
                 <div className="text-xl font-mono font-bold text-primary">{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}</div>
             </div>
@@ -73,12 +73,16 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isTimerVisible, setIsTimerVisible] = useState(true);
     const [showTimeUpDialog, setShowTimeUpDialog] = useState(false);
+    
+    const timeTakenRef = useRef(0);
 
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
 
     const handleTimeUp = () => {
-        setShowTimeUpDialog(true);
+        if (!showTimeUpDialog && !isSubmitting) {
+            setShowTimeUpDialog(true);
+        }
     };
 
     const submitFromDialog = () => {
@@ -106,14 +110,38 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
         setIsSubmitting(true);
         toast({
             title: "กำลังส่งข้อสอบ...",
-            description: "ระบบกำลังส่งคำตอบของคุณเพื่อตรวจด้วย AI โปรดรอสักครู่",
+            description: "ระบบกำลังประมวลผลคำตอบของคุณ โปรดรอสักครู่",
         });
 
+        // This simulates a short delay for processing, then navigates with results.
         setTimeout(() => {
-            // Simulate AI grading
-            setIsSubmitting(false);
-            router.push(`/quiz/${quiz.id}/results`);
-        }, 2500);
+            const results = quiz.questions.map(q => {
+                const userAnswer = answers[q.id] || "";
+                let isCorrect = false;
+
+                // For MCQ and T/F, check if the selected option ID matches the correct answer ID.
+                if (q.type === 'mcq' || q.type === 'tf') {
+                    isCorrect = userAnswer === q.correctAnswer;
+                } else if (q.type === 'short') {
+                    // For short answers, we'll just pass it through. AI grading is a future feature.
+                    // For now, let's consider it incorrect for scoring purposes unless it's an exact match.
+                    isCorrect = userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+                }
+
+                return {
+                    question: q, // Pass the full question object
+                    userAnswer: userAnswer,
+                    isCorrect: isCorrect
+                };
+            });
+            
+            const resultsString = JSON.stringify(results);
+            const timeTaken = timeTakenRef.current;
+
+            // Navigate to results page with data in query params
+            router.push(`/quiz/${quiz.id}/results?results=${encodeURIComponent(resultsString)}&timeTaken=${timeTaken}&totalTime=${quiz.timeInMinutes}`);
+
+        }, 1500);
     };
 
     return (
@@ -121,27 +149,32 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
              <AlertDialog>
                 <div className="flex justify-between items-center mb-4 gap-2">
                     <AlertDialogTrigger asChild>
-                         <Button variant="destructive" size="icon" className="h-8 w-8">
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Submit Quiz</span>
+                         <Button variant="destructive" className="h-9">
+                            <X className="mr-2 h-4 w-4" />
+                            ส่งข้อสอบ
                         </Button>
                     </AlertDialogTrigger>
                     <div className="flex items-center space-x-2">
-                        {isTimerVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        <Label htmlFor="timer-visibility">Show Timer</Label>
+                        <Label htmlFor="timer-visibility">{isTimerVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</Label>
                         <Switch
                             id="timer-visibility"
                             checked={isTimerVisible}
                             onCheckedChange={setIsTimerVisible}
+                            aria-label="Toggle timer visibility"
                         />
                     </div>
                 </div>
                 
-                <Timer initialTimeInSeconds={quiz.timeInMinutes * 60} onTimeUp={handleTimeUp} isVisible={isTimerVisible} />
+                <Timer 
+                    initialTimeInSeconds={quiz.timeInMinutes * 60} 
+                    onTimeUp={handleTimeUp} 
+                    isVisible={isTimerVisible}
+                    timeTakenRef={timeTakenRef}
+                />
 
                 <Card className="w-full shadow-xl">
                     <CardHeader>
-                        <CardTitle className="font-headline text-2xl">{`Question ${currentQuestionIndex + 1} of ${quiz.questions.length}`}</CardTitle>
+                        <CardTitle className="font-headline text-2xl">{`คำถามข้อที่ ${currentQuestionIndex + 1} จาก ${quiz.questions.length}`}</CardTitle>
                         <Progress value={progress} className="mt-2" />
                     </CardHeader>
                     <CardContent className="py-6 min-h-[200px]">
@@ -171,10 +204,10 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                         {currentQuestion.type === 'tf' && (
                              <RadioGroup value={answers[currentQuestion.id] || ''} onValueChange={(val) => handleAnswerChange(currentQuestion.id, val)} className="space-y-3">
                                 {currentQuestion.options?.map(option => {
-                                    const isSelected = answers[currentQuestion.id] === option.text;
+                                    const isSelected = answers[currentQuestion.id] === option.id;
                                     return (
                                         <div key={option.id} className="flex items-center">
-                                            <RadioGroupItem value={option.text} id={option.id} className="sr-only" />
+                                            <RadioGroupItem value={option.id} id={option.id} className="sr-only" />
                                             <Label 
                                                 htmlFor={option.id} 
                                                 className={cn(
@@ -192,7 +225,7 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                         )}
                         {currentQuestion.type === 'short' && (
                             <Textarea 
-                                placeholder="Type your answer here..."
+                                placeholder="พิมพ์คำตอบของคุณที่นี่..."
                                 value={answers[currentQuestion.id] || ''}
                                 onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
                                 className="text-base h-32"
@@ -200,14 +233,16 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                         )}
                     </CardContent>
                     <CardFooter className="flex justify-between">
-                        <Button variant="outline" onClick={handlePrev} disabled={currentQuestionIndex === 0}>Previous</Button>
+                        <Button variant="outline" onClick={handlePrev} disabled={currentQuestionIndex === 0}>ก่อนหน้า</Button>
                         {currentQuestionIndex < quiz.questions.length - 1 ? (
-                            <Button onClick={handleNext}>Next</Button>
+                            <Button onClick={handleNext}>ถัดไป</Button>
                         ) : (
-                            <Button onClick={handleSubmit} disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                                ส่งข้อสอบ
-                            </Button>
+                            <AlertDialogTrigger asChild>
+                                <Button disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                    ส่งข้อสอบ
+                                </Button>
+                            </AlertDialogTrigger>
                         )}
                     </CardFooter>
                 </Card>
@@ -216,7 +251,7 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                     <AlertDialogHeader>
                     <AlertDialogTitle>ยืนยันการส่งข้อสอบ?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        คุณกำลังจะส่งข้อสอบก่อนที่จะทำครบทุกข้อ คุณแน่ใจหรือไม่?
+                        คุณแน่ใจหรือไม่ว่าต้องการส่งข้อสอบ? การกระทำนี้ไม่สามารถย้อนกลับได้
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -228,16 +263,18 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
                 </AlertDialogContent>
              </AlertDialog>
 
-            <AlertDialog open={showTimeUpDialog}>
+            <AlertDialog open={showTimeUpDialog} onOpenChange={setShowTimeUpDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>Time's Up!</AlertDialogTitle>
+                    <AlertDialogTitle>หมดเวลา!</AlertDialogTitle>
                     <AlertDialogDescription>
-                        The timer for this quiz has run out. Your answers will be submitted for grading now.
+                        เวลาในการทำข้อสอบหมดแล้ว ระบบจะทำการส่งคำตอบของคุณเพื่อตรวจคะแนน
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                    <AlertDialogAction onClick={submitFromDialog}>Submit My Answers</AlertDialogAction>
+                    <AlertDialogAction onClick={submitFromDialog} disabled={isSubmitting}>
+                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "ส่งคำตอบของฉัน"}
+                    </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
