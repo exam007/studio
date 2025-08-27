@@ -7,14 +7,17 @@ import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { ref, onValue } from "firebase/database";
+import { useToast } from "@/components/ui/use-toast";
+
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
+    const { toast } = useToast();
     const searchParams = useSearchParams();
     const { user, loading } = useAuth();
     const [isAuthorized, setIsAuthorized] = useState(false);
@@ -26,22 +29,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         // Check for special admin session
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+        
+        // If there's a firebase user and it's the admin, they are authorized
+        if (user && user.email === 'narongtorn.s@attorney285.co.th') {
+            setIsAuthorized(true);
+            return;
+        }
+
+        // If there's a session but no firebase user, they are also authorized
         if (isAdminSession) {
             setIsAuthorized(true);
             return;
         }
 
-        // Standard Firebase auth check
-        if (!user) {
-            router.push('/');
-            return;
-        }
-        const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
-        if (!isAdmin) {
-            router.push('/');
-        } else {
-            setIsAuthorized(true);
-        }
+        // Otherwise, if not loading and no user/session, redirect
+        router.push('/');
+
     }, [user, loading, router]);
 
     useEffect(() => {
@@ -58,6 +61,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         sessionStorage.removeItem('isAdminLoggedIn');
         await signOut(auth);
         router.push('/');
+    };
+
+    const handleViewAsUser = async () => {
+        // We need to sign in as admin to get a user object for the dashboard layout
+        try {
+            if (user?.email !== 'narongtorn.s@attorney285.co.th') {
+                 await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
+            }
+            router.push('/dashboard');
+        } catch (error) {
+             toast({
+                title: "เกิดข้อผิดพลาด",
+                description: "ไม่สามารถสลับมุมมองได้",
+                variant: "destructive"
+            });
+            console.error("Failed to sign in for user view:", error);
+        }
     };
 
     const isActive = (path: string, tab?: string) => {
@@ -126,11 +146,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 </Link>
                             </SidebarMenuItem>
                              <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'} className="group-data-[collapsible=icon]:justify-center">
-                                    <Link href="/dashboard">
-                                        <Eye />
-                                        <span className="group-data-[collapsible=icon]:hidden">มุมมองผู้ใช้</span>
-                                    </Link>
+                                <SidebarMenuButton onClick={handleViewAsUser} tooltip="มุมมองผู้ใช้" size="lg" isActive={pathname === '/dashboard'} className="group-data-[collapsible=icon]:justify-center">
+                                    <Eye />
+                                    <span className="group-data-[collapsible=icon]:hidden">มุมมองผู้ใช้</span>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>

@@ -11,16 +11,12 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ref, get, child } from "firebase/database";
 
-const isUserRegistered = async (email: string | null): Promise<boolean> => {
-    if (!email) return false;
+const isUserRegistered = async (uid: string): Promise<boolean> => {
+    if (!uid) return false;
     try {
-        const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
-        if (snapshot.exists()) {
-            const users = snapshot.val();
-            return Object.values(users).some((user: any) => user.email.toLowerCase() === email.toLowerCase());
-        }
-        return false;
+        const userRef = ref(db, `users/${uid}`);
+        const snapshot = await get(userRef);
+        return snapshot.exists();
     } catch (error) {
         console.error("Error checking registration:", error);
         return false;
@@ -49,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             if (adminStatus) {
                 setIsAuthorized(true);
             } else {
-                const registered = await isUserRegistered(user.email);
+                const registered = await isUserRegistered(user.uid);
                 if (registered) {
                     setIsAuthorized(true);
                 } else {

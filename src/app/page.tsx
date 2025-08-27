@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Shield } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,23 +24,12 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
   );
 
-const isUserRegistered = async (email: string | null): Promise<boolean> => {
-    if (!email) return false;
-    
-    // Admin is not a "registered user" in the database, they have a special login.
-    if (email === 'narongtorn.s@attorney285.co.th') return false;
-
+const isUserRegistered = async (uid: string): Promise<boolean> => {
+    if (!uid) return false;
     try {
-        const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
-        if (snapshot.exists()) {
-            const users = snapshot.val();
-            const foundUser = Object.values(users).find((user: any) => 
-                user.email.toLowerCase() === email.toLowerCase()
-            );
-            return !!foundUser;
-        }
-        return false;
+        const userRef = ref(db, `users/${uid}`);
+        const snapshot = await get(userRef);
+        return snapshot.exists();
     } catch (error) {
         console.error("Error checking user registration in Firebase DB:", error);
         return false;
@@ -66,6 +55,14 @@ export default function LoginPage() {
         // Special check for admin session from password login
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
         if (isAdminSession) {
+             // If there's no firebase user, sign in silently
+            if (!user) {
+                try {
+                    await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
+                } catch (e) {
+                     // Fails if already signed in, which is fine
+                }
+            }
             router.push('/admin/dashboard');
             setIsCheckingUser(false);
             return;
@@ -76,7 +73,7 @@ export default function LoginPage() {
             if (isAdmin) {
               router.push('/admin/dashboard');
             } else {
-                const isRegistered = await isUserRegistered(user.email);
+                const isRegistered = await isUserRegistered(user.uid);
                 if (isRegistered) {
                     router.push('/dashboard');
                 } else {
@@ -108,7 +105,7 @@ export default function LoginPage() {
         const loggedInUser = auth.currentUser || (error.customData ? error.customData.user : null);
 
         if (loggedInUser) {
-             const isRegistered = await isUserRegistered(loggedInUser.email);
+             const isRegistered = await isUserRegistered(loggedInUser.uid);
              if (!isRegistered) {
                 setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแลเพื่อขอสิทธิ์");
                 
@@ -142,8 +139,16 @@ export default function LoginPage() {
     }
     handleLoginAttempt();
     
+    // This is a special, non-Firebase login path for the admin
     if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
         sessionStorage.setItem('isAdminLoggedIn', 'true');
+        // We still sign in to create a consistent auth state
+        try {
+            await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+        } catch (error) {
+            // This might fail if already signed in, which is okay.
+            console.warn("Admin sign-in warning:", error);
+        }
         router.push('/admin/dashboard');
     } else {
          setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
