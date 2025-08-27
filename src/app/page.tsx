@@ -78,6 +78,7 @@ export default function LoginPage() {
                 } else {
                     await signOut(auth);
                     setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
+                    setIsCheckingUser(false);
                 }
             }
         } else {
@@ -151,7 +152,7 @@ export default function LoginPage() {
     }
   }
 
-    if (loading || isCheckingUser) { 
+    if (isCheckingUser) { 
         return (
             <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
                 <div className="flex flex-col items-center gap-4 text-center">
@@ -242,3 +243,5 @@ export default function LoginPage() {
         </main>
     );
 }
+
+    
