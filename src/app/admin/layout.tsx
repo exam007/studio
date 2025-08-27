@@ -27,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         if (loading) return;
 
-        // Check for special admin session
+        // Special check for admin session
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
         
         // If there's a firebase user and it's the admin, they are authorized
@@ -64,12 +64,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     const handleViewAsUser = async () => {
-        // We need to sign in as admin to get a user object for the dashboard layout
         try {
             if (user?.email !== 'narongtorn.s@attorney285.co.th') {
                  await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
             }
-            router.push('/dashboard');
+            router.push('/dashboard?tab=all-quizzes');
         } catch (error) {
              toast({
                 title: "เกิดข้อผิดพลาด",
@@ -159,7 +158,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 <SidebarMenuButton tooltip="Logout" size="lg" onClick={handleLogout} className="group-data-[collapsible=icon]:justify-center">
                                     <LogOut />
                                     <span className="group-data-[collapsible=icon]:hidden">Logout</span>
-                                </SidebarMenuButton>
+                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarFooter>

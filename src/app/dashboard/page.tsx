@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Calendar, ArrowRight, BookOpen, Loader2, Lock } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Image from "next/image";
 import { ref, get } from "firebase/database";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useSearchParams } from "next/navigation";
 
 type Exam = {
     id: string;
@@ -64,9 +65,11 @@ const QuizCard = ({ quiz, hasPermission }: { quiz: Exam, hasPermission: boolean 
     </Card>
 );
 
-
-export default function UserDashboardPage() {
+function DashboardPageContent() {
     const { user } = useAuth();
+    const searchParams = useSearchParams();
+    const tab = searchParams.get('tab');
+
     const [allQuizzes, setAllQuizzes] = useState<Exam[]>([]);
     const [permittedQuizIds, setPermittedQuizIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
@@ -82,17 +85,23 @@ export default function UserDashboardPage() {
                 const allExamsData: Exam[] = examsSnapshot.exists() ? Object.values(examsSnapshot.val()) : [];
                 setAllQuizzes(allExamsData);
                 
-                // 2. Get all permissions for the current user
-                const permissionsSnapshot = await get(ref(db, 'permissions'));
-                const allPermissions = permissionsSnapshot.exists() ? permissionsSnapshot.val() : {};
+                // 2. Get all permissions for the current user or show all for admin
+                const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
+                if (isAdmin) {
+                    const allIds = new Set(allExamsData.map(q => q.id));
+                    setPermittedQuizIds(allIds);
+                } else {
+                    const permissionsSnapshot = await get(ref(db, 'permissions'));
+                    const allPermissions = permissionsSnapshot.exists() ? permissionsSnapshot.val() : {};
 
-                const userPermittedIds = new Set<string>();
-                Object.keys(allPermissions).forEach(examId => {
-                    if (allPermissions[examId] && allPermissions[examId].includes(user.uid)) {
-                        userPermittedIds.add(examId);
-                    }
-                });
-                setPermittedQuizIds(userPermittedIds);
+                    const userPermittedIds = new Set<string>();
+                    Object.keys(allPermissions).forEach(examId => {
+                        if (allPermissions[examId] && allPermissions[examId].includes(user.uid)) {
+                            userPermittedIds.add(examId);
+                        }
+                    });
+                    setPermittedQuizIds(userPermittedIds);
+                }
 
             } catch (error) {
                 console.error("Failed to fetch quizzes and permissions:", error);
@@ -116,6 +125,7 @@ export default function UserDashboardPage() {
     }
     
     const permittedQuizzes = allQuizzes.filter(quiz => permittedQuizIds.has(quiz.id));
+    const defaultTabValue = tab === 'all-quizzes' ? 'all-quizzes' : 'my-quizzes';
 
     return (
         <div className="animate-in fade-in-50">
@@ -124,7 +134,7 @@ export default function UserDashboardPage() {
                 <p className="text-muted-foreground mt-2">เลือกทำข้อสอบที่คุณได้รับสิทธิ์ หรือดูข้อสอบทั้งหมดที่มีในระบบ</p>
             </div>
             
-            <Tabs defaultValue="my-quizzes" className="w-full">
+            <Tabs defaultValue={defaultTabValue} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto sm:mx-0 sm:max-w-sm mb-6">
                     <TabsTrigger value="my-quizzes">ข้อสอบของคุณ</TabsTrigger>
                     <TabsTrigger value="all-quizzes">ข้อสอบทั้งหมด</TabsTrigger>
@@ -162,4 +172,12 @@ export default function UserDashboardPage() {
             </Tabs>
         </div>
     );
+}
+
+export default function UserDashboardPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <DashboardPageContent />
+        </Suspense>
+    )
 }
