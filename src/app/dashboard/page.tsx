@@ -3,12 +3,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Calendar, ArrowRight, BookOpen } from "lucide-react";
+import { FileText, Calendar, ArrowRight, BookOpen, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, get, child } from "firebase/database";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 type Exam = {
     id: string;
@@ -18,32 +19,67 @@ type Exam = {
 }
 
 export default function UserDashboardPage() {
-    const [allQuizzes, setAllQuizzes] = useState<Exam[]>([]);
+    const { user } = useAuth();
+    const [permittedQuizzes, setPermittedQuizzes] = useState<Exam[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const quizzesRef = ref(db, 'exams/');
-        onValue(quizzesRef, (snapshot) => {
-            const data = snapshot.val();
-            const loadedQuizzes = data ? Object.values(data) as Exam[] : [];
-            setAllQuizzes(loadedQuizzes);
-        });
-    }, []);
+        if (!user) return;
 
+        const fetchPermittedQuizzes = async () => {
+            setLoading(true);
+            try {
+                // 1. Get all exams
+                const examsSnapshot = await get(ref(db, 'exams'));
+                const allExams: Exam[] = examsSnapshot.exists() ? Object.values(examsSnapshot.val()) : [];
+                
+                // 2. Get all permissions
+                const permissionsSnapshot = await get(ref(db, 'permissions'));
+                const allPermissions = permissionsSnapshot.exists() ? permissionsSnapshot.val() : {};
+
+                // 3. Filter exams based on user's permission
+                const userPermittedExamIds = Object.keys(allPermissions).filter(examId => 
+                    allPermissions[examId] && allPermissions[examId].includes(user.uid)
+                );
+
+                const quizzes = allExams.filter(exam => userPermittedExamIds.includes(exam.id));
+                setPermittedQuizzes(quizzes);
+
+            } catch (error) {
+                console.error("Failed to fetch permitted quizzes:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPermittedQuizzes();
+    }, [user]);
+
+    if (loading) {
+        return (
+            <div className="flex h-[calc(100vh-200px)] w-full items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="text-muted-foreground">กำลังโหลดข้อสอบของคุณ...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="animate-in fade-in-50">
             <div className="mb-8">
                 <h1 className="text-3xl font-headline font-bold">เลือกวิชาเพื่อเริ่มทำข้อสอบ</h1>
-                <p className="text-muted-foreground mt-2">เลือกวิชาที่คุณต้องการทดสอบความรู้ได้จากด้านล่างนี้</p>
+                <p className="text-muted-foreground mt-2">เลือกวิชาที่คุณได้รับสิทธิ์ในการทดสอบความรู้ได้จากด้านล่างนี้</p>
             </div>
             <div>
-                {allQuizzes.length > 0 ? (
+                {permittedQuizzes.length > 0 ? (
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {allQuizzes.map(quiz => (
+                        {permittedQuizzes.map(quiz => (
                             <Card key={quiz.id} className="flex flex-col hover:shadow-lg transition-shadow duration-300 overflow-hidden">
                                 <CardHeader className="p-0">
                                     <Image 
-                                        src="https://placehold.co/600x400.png"
+                                        src={`https://picsum.photos/seed/${quiz.id}/600/400`}
                                         alt={`ภาพประกอบข้อสอบ ${quiz.name}`}
                                         width={600}
                                         height={400}
@@ -82,7 +118,7 @@ export default function UserDashboardPage() {
                 ) : (
                     <div className="text-center py-16 border-2 border-dashed rounded-lg">
                         <h2 className="text-xl font-semibold">ไม่พบข้อสอบ</h2>
-                        <p className="text-muted-foreground mt-2">ยังไม่มีข้อสอบในระบบที่ผู้ดูแลสร้างไว้</p>
+                        <p className="text-muted-foreground mt-2">คุณยังไม่ได้รับสิทธิ์ให้ทำข้อสอบใดๆ โปรดติดต่อผู้ดูแล</p>
                     </div>
                 )}
             </div>

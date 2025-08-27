@@ -47,12 +47,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         const requestsRef = ref(db, 'requests/');
         const unsubscribe = onValue(requestsRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const pendingRequests = snapshot.val();
-                setPendingCount(Object.keys(pendingRequests).length);
-            } else {
-                setPendingCount(0);
-            }
+            const pendingRequests = snapshot.val() || {};
+            setPendingCount(Object.keys(pendingRequests).length);
         });
         
         return () => unsubscribe();
@@ -68,12 +64,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const currentTab = searchParams.get('tab');
         if (path === '/admin/dashboard') {
             if (tab) {
-                 return currentTab === tab;
+                return currentTab === tab;
             }
-            return !currentTab || currentTab === 'exams';
+            // Default to 'exams' tab if no tab is selected
+            return pathname === path && (currentTab === 'exams' || !currentTab);
         }
         return pathname.startsWith(path) && !tab;
     };
+
 
     if (loading || !isAuthorized) {
         return (
