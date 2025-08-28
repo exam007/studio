@@ -82,7 +82,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.push('/admin/dashboard');
     }
 
-    if (loading || !isAuthorized) {
+    if (!isAuthorized) { // Combines loading and authorization check
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
@@ -157,3 +157,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarProvider>
     );
 }
+
+    
