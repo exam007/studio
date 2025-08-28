@@ -57,23 +57,20 @@ export default function LoginPage() {
 
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
 
-        if (user || isAdminSession) {
-             if (isAdminSession || (user && user.email === 'narongtorn.s@attorney285.co.th')) {
-                router.push('/admin/dashboard');
-             } else if (user) {
-                 const isRegistered = await isUserRegistered(user.uid);
-                 if (isRegistered) {
-                     router.push('/dashboard');
-                 } else {
-                    await signOut(auth);
-                    setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
-                    setIsCheckingUser(false);
-                 }
-             } else {
-                 setIsCheckingUser(false);
-             }
+        if (isAdminSession || (user && user.email === 'narongtorn.s@attorney285.co.th')) {
+            router.push('/admin/dashboard');
+        } else if (user) {
+            const isRegistered = await isUserRegistered(user.uid);
+            if (isRegistered) {
+                router.push('/dashboard');
+            } else {
+                await signOut(auth);
+                setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
+                setIsCheckingUser(false);
+            }
         } else {
-            // Not logged in, show login page
+            // If not loading, no user, and no admin session, it means it's a new visitor.
+            // Stop checking and show the login page.
             setIsCheckingUser(false);
         }
     };
@@ -235,3 +232,5 @@ export default function LoginPage() {
         </main>
     );
 }
+
+    
