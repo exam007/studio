@@ -32,29 +32,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     useEffect(() => {
         const checkAuthorization = async () => {
-            // Wait until Firebase auth state is loaded
+            // Wait until Firebase auth state is loaded. This is the key to preventing loops.
             if (loading) {
                 return; 
             }
 
-            // If loading is finished and there's no user, redirect to login
+            // If loading is finished and there's still no user, they are not logged in.
+            // Redirect them to the login page.
             if (!user) {
                 router.push('/');
                 return;
             }
             
-            // If user object exists, proceed with authorization checks
+            // If a user object exists, we can proceed with authorization checks.
             const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
             setIsAdmin(adminStatus);
             
+            // The user is authorized if they are an admin.
             if (adminStatus) {
                 setIsAuthorized(true);
             } else {
+                // Or if they are a regular user found in the database.
                 const registered = await isUserRegistered(user.uid);
                 if (registered) {
                     setIsAuthorized(true);
                 } else {
-                    // Log out user if not admin and not registered in the database
+                    // If they are not in the database, they are unauthorized.
+                    // Log them out and send to the login page.
                     await signOut(auth);
                     router.push('/');
                 }
@@ -82,7 +86,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.push('/admin/dashboard');
     }
 
-    if (!isAuthorized) { // Combines loading and authorization check
+    // This is the loading screen. It will show until `isAuthorized` is set to true.
+    // The useEffect hook above is responsible for setting this state correctly.
+    if (!isAuthorized) {
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
@@ -119,7 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </SidebarMenuItem>
                              {isAdmin && (
                                 <SidebarMenuItem>
-                                    <SidebarMenuButton onClick={handleSwitchToAdminView} tooltip="กลับไปหน้า Admin" size="lg" isActive={isActive("/admin/dashboard")} className="group-data-[collapsible=icon]:justify-center">
+                                    <SidebarMenuButton onClick={handleSwitchToAdminView} tooltip="กลับไปหน้า Admin" size="lg" className="group-data-[collapsible=icon]:justify-center">
                                         <LayoutDashboard />
                                         <span className="group-data-[collapsible=icon]:hidden">กลับไปหน้า Admin</span>
                                     </SidebarMenuButton>

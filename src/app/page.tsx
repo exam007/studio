@@ -50,33 +50,39 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkUserStatus = async () => {
+        // Wait until Firebase auth state is loaded before doing anything
         if (loading) {
-            return; // Wait until Firebase auth state is loaded
+            return;
         }
 
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
 
+        // If there's an admin session, they are authorized. Redirect immediately.
         if (isAdminSession) {
             router.push('/admin/dashboard');
-            return; // Exit early
+            return;
         }
 
+        // If there is a Firebase user object, check their status
         if (user) {
+            // Check if they are the hardcoded admin
             if (user.email === 'narongtorn.s@attorney285.co.th') {
                  router.push('/admin/dashboard');
             } else {
+                // Check if they are a registered user in the database
                 const isRegistered = await isUserRegistered(user.uid);
                 if (isRegistered) {
                     router.push('/dashboard');
                 } else {
+                    // If they are not registered, log them out and show an error.
                     await signOut(auth);
                     setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
                     setIsCheckingUser(false); // Show login form
                 }
             }
         } else {
-            // If not loading and no user, it's a new visitor.
-            // Stop checking and show the login page.
+            // If not loading and there's no user and no admin session, it's a new visitor.
+            // Stop checking and show the login page. This is the crucial fix.
             setIsCheckingUser(false);
         }
     };
@@ -238,7 +244,5 @@ export default function LoginPage() {
         </main>
     );
 }
-
-    
 
     
