@@ -88,7 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // This is the loading screen. It will show until `isAuthorized` is set to true.
     // The useEffect hook above is responsible for setting this state correctly.
-    if (!isAuthorized) {
+    if (loading || !isAuthorized) {
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
@@ -163,5 +163,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarProvider>
     );
 }
+
+    
 
     
