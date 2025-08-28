@@ -8,7 +8,7 @@ import { FileText, Calendar, ArrowRight, BookOpen, Loader2, Lock } from "lucide-
 import Link from "next/link";
 import { useEffect, useState, Suspense } from "react";
 import Image from "next/image";
-import { ref, get } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useSearchParams } from "next/navigation";
@@ -76,41 +76,49 @@ function DashboardPageContent() {
 
     useEffect(() => {
         if (!user) return;
+        
+        setLoading(true);
 
-        const fetchQuizzesAndPermissions = async () => {
-            setLoading(true);
-            try {
-                // 1. Get all exams
-                const examsSnapshot = await get(ref(db, 'exams'));
-                const allExamsData: Exam[] = examsSnapshot.exists() ? Object.values(examsSnapshot.val()) : [];
-                setAllQuizzes(allExamsData);
-                
-                // 2. Get all permissions for the current user or show all for admin
-                const isAdmin = user.email === 'narongtorn.s@attorney285.co.th';
-                if (isAdmin) {
-                    const allIds = new Set(allExamsData.map(q => q.id));
-                    setPermittedQuizIds(allIds);
-                } else {
-                    const permissionsSnapshot = await get(ref(db, 'permissions'));
-                    const allPermissions = permissionsSnapshot.exists() ? permissionsSnapshot.val() : {};
+        const examsRef = ref(db, 'exams');
+        const permissionsRef = ref(db, 'permissions');
 
-                    const userPermittedIds = new Set<string>();
-                    Object.keys(allPermissions).forEach(examId => {
-                        if (allPermissions[examId] && allPermissions[examId].includes(user.uid)) {
-                            userPermittedIds.add(examId);
-                        }
-                    });
-                    setPermittedQuizIds(userPermittedIds);
-                }
-
-            } catch (error) {
-                console.error("Failed to fetch quizzes and permissions:", error);
-            } finally {
+        const unsubscribeExams = onValue(examsRef, (snapshot) => {
+            const allExamsData: Exam[] = snapshot.exists() ? Object.values(snapshot.val()) : [];
+            setAllQuizzes(allExamsData);
+            
+            // If user is admin, grant all permissions immediately
+            if (user.email === 'narongtorn.s@attorney285.co.th') {
+                const allIds = new Set(allExamsData.map(q => q.id));
+                setPermittedQuizIds(allIds);
                 setLoading(false);
             }
-        };
+        });
 
-        fetchQuizzesAndPermissions();
+        let unsubscribePermissions: () => void;
+
+        if (user.email !== 'narongtorn.s@attorney285.co.th') {
+            unsubscribePermissions = onValue(permissionsRef, (snapshot) => {
+                const allPermissions = snapshot.exists() ? snapshot.val() : {};
+                const userPermittedIds = new Set<string>();
+                Object.keys(allPermissions).forEach(examId => {
+                    if (allPermissions[examId] && allPermissions[examId].includes(user.uid)) {
+                        userPermittedIds.add(examId);
+                    }
+                });
+                setPermittedQuizIds(userPermittedIds);
+                setLoading(false);
+            }, (error) => {
+                console.error("Failed to fetch permissions:", error);
+                setLoading(false);
+            });
+        }
+
+        return () => {
+            unsubscribeExams();
+            if (unsubscribePermissions) {
+                unsubscribePermissions();
+            }
+        };
     }, [user]);
 
     if (loading) {
