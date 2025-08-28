@@ -32,12 +32,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     useEffect(() => {
         const checkAuthorization = async () => {
+            // Wait until Firebase auth state is loaded
             if (loading) {
-                return; // Wait until Firebase auth state is loaded
+                return; 
             }
 
+            // If loading is finished and there's no user, redirect to login
             if (!user) {
-                router.push('/'); // No user, redirect to login
+                router.push('/');
                 return;
             }
             
