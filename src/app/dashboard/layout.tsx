@@ -29,6 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { user, loading } = useAuth();
     const [isAdmin, setIsAdmin] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState(false);
+    const [isChecking, setIsChecking] = useState(true); // New state to manage loading screen
 
     useEffect(() => {
         const checkAuthorization = async () => {
@@ -38,9 +39,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }
 
             // If loading is finished and there's still no user, they are not logged in.
-            // Redirect them to the login page.
+            // Redirect them to the login page and finish checking.
             if (!user) {
                 router.push('/');
+                // No need to set isChecking to false here, as the component will unmount.
                 return;
             }
             
@@ -61,8 +63,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     // Log them out and send to the login page.
                     await signOut(auth);
                     router.push('/');
+                    // No need to set isChecking to false here.
+                    return;
                 }
             }
+            // If any authorization path is successful, stop the checking process.
+            setIsChecking(false);
         };
 
         checkAuthorization();
@@ -86,9 +92,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.push('/admin/dashboard');
     }
 
-    // This is the loading screen. It will show until `isAuthorized` is set to true.
-    // The useEffect hook above is responsible for setting this state correctly.
-    if (!isAuthorized) {
+    // This is the loading screen. It will show until `isChecking` is explicitly set to false.
+    // This state is controlled by the useEffect hook above.
+    if (isChecking) {
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
@@ -163,3 +169,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarProvider>
     );
 }
+
+    

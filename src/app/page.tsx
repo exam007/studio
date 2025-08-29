@@ -56,25 +56,26 @@ export default function LoginPage() {
 
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
 
-        if (isAdminSession) {
-            router.push('/admin/dashboard');
-            return;
-        }
-
         if (user) {
-            if (user.email === 'narongtorn.s@attorney285.co.th') {
+             if (user.email === 'narongtorn.s@attorney285.co.th') {
                  router.push('/admin/dashboard');
             } else {
                 const isRegistered = await isUserRegistered(user.uid);
                 if (isRegistered) {
                     router.push('/dashboard');
                 } else {
+                    // This case handles users who logged in but are not in the DB
                     await signOut(auth);
                     setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
                     setIsCheckingUser(false);
                 }
             }
+        } else if (isAdminSession) {
+            // This handles admins who have a session but might not be auth'd in firebase yet
+            router.push('/admin/dashboard');
         } else {
+            // This is the crucial part for new browsers/users.
+            // If there's no user and no admin session, we stop checking and show the login form.
             setIsCheckingUser(false);
         }
     };
@@ -239,3 +240,5 @@ export default function LoginPage() {
         </main>
     );
 }
+
+    
