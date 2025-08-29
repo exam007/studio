@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
-import { ref, onValue, set, remove, get, child } from "firebase/database";
+import { ref, onValue, set, remove, get } from "firebase/database";
 import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
