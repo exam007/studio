@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useEffect, useRef, useState } from "react";
@@ -162,7 +161,7 @@ const ExamsTabContent = ({ exams, handleOpenEditDialog, handleEditQuestions, han
       </Card>
 );
 
-const UsersTabContent = ({ users, isAddUserDialogOpen, setIsAddUserDialogOpen, handleAddNewUser, newUserName, setNewUserName, newUserEmail, setNewUserEmail, handleDeleteUser }: any) => {
+const UsersTabContent = ({ users, isAddUserDialogOpen, setIsAddUserDialogOpen, onAddNewUser, newUserName, setNewUserName, newUserEmail, setNewUserEmail, handleDeleteUser }: any) => {
     return (
     <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
         <Card>
@@ -684,7 +683,7 @@ export function DashboardContent() {
                     users={users}
                     isAddUserDialogOpen={isAddUserDialogOpen} 
                     setIsAddUserDialogOpen={setIsAddUserDialogOpen} 
-                    handleAddNewUser={handleAddNewUser}
+                    onAddNewUser={handleAddNewUser}
                     newUserName={newUserName} 
                     setNewUserName={setNewUserName}
                     newUserEmail={newUserEmail}
@@ -785,3 +784,5 @@ export function DashboardContent() {
     </div>
   );
 }
+
+    
