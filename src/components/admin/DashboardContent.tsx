@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useEffect, useRef, useState } from "react";
@@ -277,7 +278,7 @@ const UsersTabContent = ({ users, isAddUserDialogOpen, setIsAddUserDialogOpen, o
             </div>
             <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>ยกเลิก</Button>
-                <Button type="submit" onClick={handleAddNewUser}>บันทึก</Button>
+                <Button type="submit" onClick={onAddNewUser}>บันทึก</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
@@ -784,5 +785,7 @@ export function DashboardContent() {
     </div>
   );
 }
+
+    
 
     
