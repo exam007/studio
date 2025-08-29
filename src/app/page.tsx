@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Shield } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, User } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -50,39 +50,31 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkUserStatus = async () => {
-        // Wait until Firebase auth state is loaded before doing anything
         if (loading) {
             return;
         }
 
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
 
-        // If there's an admin session, they are authorized. Redirect immediately.
         if (isAdminSession) {
             router.push('/admin/dashboard');
             return;
         }
 
-        // If there is a Firebase user object, check their status
         if (user) {
-            // Check if they are the hardcoded admin
             if (user.email === 'narongtorn.s@attorney285.co.th') {
                  router.push('/admin/dashboard');
             } else {
-                // Check if they are a registered user in the database
                 const isRegistered = await isUserRegistered(user.uid);
                 if (isRegistered) {
                     router.push('/dashboard');
                 } else {
-                    // If they are not registered, log them out and show an error.
                     await signOut(auth);
                     setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
-                    setIsCheckingUser(false); // Show login form
+                    setIsCheckingUser(false);
                 }
             }
         } else {
-            // If not loading and there's no user and no admin session, it's a new visitor.
-            // Stop checking and show the login page. This is the crucial fix.
             setIsCheckingUser(false);
         }
     };
@@ -98,38 +90,41 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     handleLoginAttempt();
     const provider = new GoogleAuthProvider();
+    let loggedInUser: User | null = null;
+    
     try {
-      const result = await signInWithPopup(auth, provider);
-      // The useEffect hook will handle redirection once the `user` state is updated.
+        const result = await signInWithPopup(auth, provider);
+        loggedInUser = result.user;
+
+        const isRegistered = await isUserRegistered(loggedInUser.uid);
+        if (!isRegistered) {
+            setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแลเพื่อขอสิทธิ์");
+            
+            const requestRef = ref(db, `requests/${loggedInUser.uid}`);
+            const requestSnapshot = await get(requestRef);
+
+            if (!requestSnapshot.exists()){
+                const pendingRequest = {
+                    uid: loggedInUser.uid,
+                    email: loggedInUser.email,
+                    displayName: loggedInUser.displayName,
+                    photoURL: loggedInUser.photoURL,
+                };
+                await set(requestRef, pendingRequest);
+            }
+            await signOut(auth);
+        }
+        // If registered, the useEffect hook will handle redirection.
+
     } catch (error: any) {
-        const loggedInUser = auth.currentUser || (error.customData ? error.customData.user : null);
-
-        if (loggedInUser) {
-             const isRegistered = await isUserRegistered(loggedInUser.uid);
-             if (!isRegistered) {
-                setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแลเพื่อขอสิทธิ์");
-                
-                const requestRef = ref(db, `requests/${loggedInUser.uid}`);
-                const requestSnapshot = await get(requestRef);
-
-                if (!requestSnapshot.exists()){
-                    const pendingRequest = {
-                        uid: loggedInUser.uid,
-                        email: loggedInUser.email,
-                        displayName: loggedInUser.displayName,
-                        photoURL: loggedInUser.photoURL,
-                    };
-                    await set(requestRef, pendingRequest);
-                }
-                await signOut(auth);
-             }
-        } else if (error.code !== 'auth/popup-closed-by-user') {
+        if (error.code !== 'auth/popup-closed-by-user') {
             setLoginError(`เกิดข้อผิดพลาดในการล็อกอิน: ${error.message}`);
         }
     } finally {
         setIsLoading(false);
     }
   };
+
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,5 +239,3 @@ export default function LoginPage() {
         </main>
     );
 }
-
-    
