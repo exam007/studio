@@ -12,7 +12,7 @@ import { GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPasswor
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ref, get, set, child } from "firebase/database";
+import { ref, get, set } from "firebase/database";
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -50,32 +50,37 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkUserStatus = async () => {
+        // Wait until firebase auth is resolved
         if (loading) {
             return;
         }
 
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
 
-        if (user) {
-             if (user.email === 'narongtorn.s@attorney285.co.th') {
-                 router.push('/admin/dashboard');
+        // If user is logged in (either firebase user or admin session)
+        if (user || isAdminSession) {
+            if (user?.email === 'narongtorn.s@attorney285.co.th' || isAdminSession) {
+                // To be safe, ensure admin session is set if firebase user is admin
+                if (user?.email === 'narongtorn.s@attorney285.co.th') {
+                     sessionStorage.setItem('isAdminLoggedIn', 'true');
+                }
+                router.push('/admin/dashboard');
             } else {
+                // It's a regular user, check if they are in the database
                 const isRegistered = await isUserRegistered(user.uid);
                 if (isRegistered) {
                     router.push('/dashboard');
                 } else {
-                    // This case handles users who logged in but are not in the DB
+                    // This user is not in the database. Log them out.
                     await signOut(auth);
                     setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
-                    setIsCheckingUser(false);
+                    setIsCheckingUser(false); // Stop loading and show login form with error
                 }
             }
-        } else if (isAdminSession) {
-            // This handles admins who have a session but might not be auth'd in firebase yet
-            router.push('/admin/dashboard');
         } else {
             // This is the crucial part for new browsers/users.
-            // If there's no user and no admin session, we stop checking and show the login form.
+            // If there's no user and no admin session after loading is complete,
+            // we stop checking and show the login form.
             setIsCheckingUser(false);
         }
     };

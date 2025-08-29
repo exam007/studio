@@ -9,7 +9,7 @@ import { auth, db } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { ref, get, child } from "firebase/database";
+import { ref, get } from "firebase/database";
 
 const isUserRegistered = async (uid: string): Promise<boolean> => {
     if (!uid) return false;
@@ -28,8 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname();
     const { user, loading } = useAuth();
     const [isAdmin, setIsAdmin] = useState(false);
-    const [isAuthorized, setIsAuthorized] = useState(false);
-    const [isChecking, setIsChecking] = useState(true); // New state to manage loading screen
+    const [isChecking, setIsChecking] = useState(true); // Manages loading screen
 
     useEffect(() => {
         const checkAuthorization = async () => {
@@ -50,14 +49,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
             setIsAdmin(adminStatus);
             
+            let authorized = false;
             // The user is authorized if they are an admin.
             if (adminStatus) {
-                setIsAuthorized(true);
+                authorized = true;
             } else {
                 // Or if they are a regular user found in the database.
                 const registered = await isUserRegistered(user.uid);
                 if (registered) {
-                    setIsAuthorized(true);
+                    authorized = true;
                 } else {
                     // If they are not in the database, they are unauthorized.
                     // Log them out and send to the login page.
@@ -67,8 +67,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     return;
                 }
             }
-            // If any authorization path is successful, stop the checking process.
-            setIsChecking(false);
+            
+            // If authorization path is successful, stop the checking process.
+            if(authorized){
+                setIsChecking(false);
+            }
         };
 
         checkAuthorization();
@@ -169,5 +172,3 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarProvider>
     );
 }
-
-    
