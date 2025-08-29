@@ -767,7 +767,7 @@ export function DashboardContent() {
                 id="year"
                 type="number"
                 value={newExamYear}
-                onChange={(e) => setNewYear(e.target.value)}
+                onChange={(e) => setNewExamYear(e.target.value)}
                 className="col-span-3"
               />
             </div>
