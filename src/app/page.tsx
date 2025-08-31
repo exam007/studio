@@ -119,15 +119,16 @@ export default function LoginPage() {
                 await set(requestRef, pendingRequest);
             }
             await signOut(auth);
+            setIsLoading(false); // Stop loading after signing out unregistered user
+            return; // Stop execution here
         }
-        // If registered, the useEffect hook will handle redirection.
+        // If registered, the useEffect hook will handle redirection, no need to set loading to false here.
 
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             setLoginError(`เกิดข้อผิดพลาดในการล็อกอิน: ${error.message}`);
         }
-    } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Stop loading on error
     }
   };
 
