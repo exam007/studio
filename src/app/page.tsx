@@ -49,42 +49,24 @@ export default function LoginPage() {
   const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   useEffect(() => {
-    const checkUserStatus = async () => {
-        // Wait until firebase auth is resolved
-        if (loading) {
-            return;
-        }
+    // This effect now only handles redirection for already logged-in users.
+    // The complex logic is moved to the login handlers.
+    if (loading) {
+      return; // Wait for auth state to be confirmed
+    }
 
+    if (user) {
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
-
-        // If user is logged in (either firebase user or admin session)
-        if (user || isAdminSession) {
-            if (user?.email === 'narongtorn.s@attorney285.co.th' || isAdminSession) {
-                // To be safe, ensure admin session is set if firebase user is admin
-                if (user?.email === 'narongtorn.s@attorney285.co.th') {
-                     sessionStorage.setItem('isAdminLoggedIn', 'true');
-                }
-                router.push('/admin/dashboard');
-            } else {
-                // It's a regular user, check if they are in the database
-                const isRegistered = await isUserRegistered(user.uid);
-                if (isRegistered) {
-                    router.push('/dashboard');
-                } else {
-                    // This user is not in the database. Log them out.
-                    await signOut(auth);
-                    setLoginError("บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน หรือถูกนำออกจากระบบแล้ว โปรดติดต่อผู้ดูแล");
-                    setIsCheckingUser(false); // Stop loading and show login form with error
-                }
-            }
+        if (user.email === 'narongtorn.s@attorney285.co.th' || isAdminSession) {
+            if(user.email === 'narongtorn.s@attorney285.co.th') sessionStorage.setItem('isAdminLoggedIn', 'true');
+            router.push('/admin/dashboard');
         } else {
-            // This is the crucial part for new browsers/users.
-            // If there's no user and no admin session after loading is complete,
-            // we stop checking and show the login form.
-            setIsCheckingUser(false);
+            router.push('/dashboard');
         }
-    };
-    checkUserStatus();
+    } else {
+        // If no user, stop the loading screen and show the login form.
+        setIsCheckingUser(false);
+    }
   }, [user, loading, router]);
 
 
@@ -96,14 +78,20 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     handleLoginAttempt();
     const provider = new GoogleAuthProvider();
-    let loggedInUser: User | null = null;
     
     try {
         const result = await signInWithPopup(auth, provider);
-        loggedInUser = result.user;
+        const loggedInUser = result.user;
 
+        // After successful popup, immediately check registration
         const isRegistered = await isUserRegistered(loggedInUser.uid);
-        if (!isRegistered) {
+        
+        if (isRegistered) {
+            // If registered, the useEffect will handle redirection.
+            // We can just stop the loading spinner here.
+            setIsLoading(false);
+        } else {
+            // If not registered, create a request, show an error, and sign out.
             setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแลเพื่อขอสิทธิ์");
             
             const requestRef = ref(db, `requests/${loggedInUser.uid}`);
@@ -118,17 +106,14 @@ export default function LoginPage() {
                 };
                 await set(requestRef, pendingRequest);
             }
-            await signOut(auth);
-            setIsLoading(false); // Stop loading after signing out unregistered user
-            return; // Stop execution here
+            await signOut(auth); // This will trigger the useEffect to stop checking
+            setIsLoading(false); // Manually stop loading here
         }
-        // If registered, the useEffect hook will handle redirection, no need to set loading to false here.
-
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             setLoginError(`เกิดข้อผิดพลาดในการล็อกอิน: ${error.message}`);
         }
-        setIsLoading(false); // Stop loading on error
+        setIsLoading(false); // Stop loading on any error
     }
   };
 
@@ -144,11 +129,12 @@ export default function LoginPage() {
     if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
         sessionStorage.setItem('isAdminLoggedIn', 'true');
         try {
+            // We still sign in to keep the auth state consistent
             await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
         } catch (error) {
             console.warn("Admin sign-in warning:", error);
         }
-        router.push('/admin/dashboard');
+        // The useEffect will handle the redirect
     } else {
          setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
          setIsLoading(false);
@@ -246,8 +232,5 @@ export default function LoginPage() {
         </main>
     );
 }
-
-    
-
 
     
