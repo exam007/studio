@@ -7,21 +7,17 @@ import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { ref, onValue } from "firebase/database";
-import { useToast } from "@/components/ui/use-toast";
-
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
-    const { toast } = useToast();
     const searchParams = useSearchParams();
     const { user, loading } = useAuth();
     const [isAuthorized, setIsAuthorized] = useState(false);
-
     const [pendingCount, setPendingCount] = useState(0);
     
     useEffect(() => {
@@ -29,12 +25,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         const isAdminSession = sessionStorage.getItem('isAdminLoggedIn') === 'true';
         
-        // If there is an admin session, they are authorized.
-        // We also check for the firebase user to cover cases where they switched from user view.
-        if (isAdminSession || (user && user.email === 'narongtorn.s@attorney285.co.th')) {
+        if (user && (user.email === 'narongtorn.s@attorney285.co.th' || isAdminSession)) {
+             if (user.email === 'narongtorn.s@attorney285.co.th') {
+                sessionStorage.setItem('isAdminLoggedIn', 'true');
+             }
             setIsAuthorized(true);
         } else {
-             // Otherwise, if not loading and no user/session, redirect
             router.push('/login');
         }
     }, [user, loading, router]);
@@ -56,8 +52,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     const handleViewAsUser = () => {
-        // The admin is already logged in, so we can just navigate to the user dashboard.
-        // The dashboard layout will correctly interpret the admin's session.
         router.push('/dashboard?tab=all-quizzes');
     };
 
@@ -67,7 +61,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             if (tab) {
                 return currentTab === tab;
             }
-            // Default to 'exams' tab if no tab is selected
             return pathname === path && (currentTab === 'exams' || !currentTab);
         }
         return pathname.startsWith(path) && !tab;

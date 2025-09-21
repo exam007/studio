@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Shield } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ref, get, set } from "firebase/database";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -43,6 +44,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
@@ -67,13 +69,15 @@ export default function LoginPage() {
   }, [user, loading, router]);
 
 
-  const handleLoginAttempt = () => {
+  const handleLoginAttempt = async () => {
     setLoginError(null);
     setIsLoading(true);
+    const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
   }
 
   const handleGoogleLogin = async () => {
-    handleLoginAttempt();
+    await handleLoginAttempt();
     const provider = new GoogleAuthProvider();
     
     try {
@@ -101,12 +105,19 @@ export default function LoginPage() {
                 await set(requestRef, pendingRequest);
             }
             await signOut(auth);
+            setIsLoading(false); // Stop loading after signing out unauthorized user
+            return; // Stop execution
         }
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             setLoginError(`เกิดข้อผิดพลาดในการล็อกอิน: ${error.message}`);
         }
-    } finally {
+    } 
+    
+    // This will only be reached on successful login of an authorized user
+    // or if the popup is closed. In both cases, we should stop loading.
+    // The useEffect will handle redirection for the authorized user.
+    if(!user){
         setIsLoading(false);
     }
   };
@@ -118,7 +129,7 @@ export default function LoginPage() {
         setLoginError("กรุณากรอกอีเมลและรหัสผ่าน");
         return;
     }
-    handleLoginAttempt();
+    await handleLoginAttempt();
     
     if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
         sessionStorage.setItem('isAdminLoggedIn', 'true');
@@ -127,11 +138,13 @@ export default function LoginPage() {
             // Redirect will be handled by useEffect
         } catch (error) {
             console.warn("Admin sign-in warning:", error);
+            setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือเกิดข้อผิดพลาดในการล็อกอิน");
+            setIsLoading(false);
         }
     } else {
          setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+         setIsLoading(false);
     }
-    setIsLoading(false); // Set loading to false in all admin login paths
   }
 
     if (isCheckingUser) { 
@@ -167,8 +180,14 @@ export default function LoginPage() {
                         </AlertDescription>
                     </Alert>
                 )}
-
+                
                 <div className={cn("transition-opacity duration-300", showAdminLogin ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+                     <div className="flex items-center space-x-2 my-4">
+                        <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
+                        <Label htmlFor="remember-me" className="text-sm font-medium leading-none cursor-pointer">
+                            จดจำฉันไว้ในระบบ
+                        </Label>
+                    </div>
                     <div className="flex flex-col space-y-4">
                         <Button onClick={handleGoogleLogin} variant="secondary" className="h-12 text-base font-bold" disabled={isLoading}>
                             {isLoading && !showAdminLogin ? (
@@ -204,6 +223,12 @@ export default function LoginPage() {
                                 onChange={(e) => setAdminPassword(e.target.value)}
                                 disabled={isLoading}
                             />
+                        </div>
+                         <div className="flex items-center space-x-2 my-2">
+                            <Checkbox id="remember-me-admin" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
+                            <Label htmlFor="remember-me-admin" className="text-sm font-medium leading-none cursor-pointer">
+                                จดจำฉันไว้ในระบบ
+                            </Label>
                         </div>
                             <Button type="submit" className="w-full h-11" disabled={isLoading}>
                             {isLoading && showAdminLogin ? (

@@ -4,7 +4,7 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, S
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Home, LogOut, BookOpen, LayoutDashboard, Loader2 } from "lucide-react";
 import Link from 'next/link';
-import { signOut, signInWithEmailAndPassword } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -32,43 +32,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     useEffect(() => {
         const checkAuthorization = async () => {
-            // Wait until Firebase auth state is loaded. This is the key to preventing loops.
             if (loading) {
                 return; 
             }
 
-            // If loading is finished and there's still no user, they are not logged in.
-            // Redirect them to the login page and finish checking.
             if (!user) {
                 router.push('/login');
-                // No need to set isChecking to false here, as the component will unmount.
                 return;
             }
             
-            // If a user object exists, we can proceed with authorization checks.
             const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
             setIsAdmin(adminStatus);
             
             let authorized = false;
-            // The user is authorized if they are an admin.
             if (adminStatus) {
                 authorized = true;
             } else {
-                // Or if they are a regular user found in the database.
                 const registered = await isUserRegistered(user.uid);
                 if (registered) {
                     authorized = true;
                 } else {
-                    // If they are not in the database, they are unauthorized.
-                    // Log them out and send to the login page.
                     await signOut(auth);
                     router.push('/login');
-                    // No need to set isChecking to false here.
                     return;
                 }
             }
             
-            // If authorization path is successful, stop the checking process.
             if(authorized){
                 setIsChecking(false);
             }
@@ -85,18 +74,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
 
     const handleSwitchToAdminView = async () => {
-        // Ensure admin is logged in with session for seamless switch
         sessionStorage.setItem('isAdminLoggedIn', 'true');
-        try {
-            await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
-        } catch (error) {
-            // This might fail if already signed in, which is okay.
-        }
         router.push('/admin/dashboard');
     }
 
-    // This is the loading screen. It will show until `isChecking` is explicitly set to false.
-    // This state is controlled by the useEffect hook above.
     if (isChecking) {
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
