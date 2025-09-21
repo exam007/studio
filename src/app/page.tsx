@@ -49,10 +49,8 @@ export default function LoginPage() {
   const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   useEffect(() => {
-    // This effect now only handles redirection for already logged-in users.
-    // The complex logic is moved to the login handlers.
     if (loading) {
-      return; // Wait for auth state to be confirmed
+      return; 
     }
 
     if (user) {
@@ -64,7 +62,6 @@ export default function LoginPage() {
             router.push('/dashboard');
         }
     } else {
-        // If no user, stop the loading screen and show the login form.
         setIsCheckingUser(false);
     }
   }, [user, loading, router]);
@@ -83,15 +80,11 @@ export default function LoginPage() {
         const result = await signInWithPopup(auth, provider);
         const loggedInUser = result.user;
 
-        // After successful popup, immediately check registration
         const isRegistered = await isUserRegistered(loggedInUser.uid);
         
         if (isRegistered) {
-            // If registered, the useEffect will handle redirection.
-            // We can just stop the loading spinner here.
             setIsLoading(false);
         } else {
-            // If not registered, create a request, show an error, and sign out.
             setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแลเพื่อขอสิทธิ์");
             
             const requestRef = ref(db, `requests/${loggedInUser.uid}`);
@@ -106,14 +99,14 @@ export default function LoginPage() {
                 };
                 await set(requestRef, pendingRequest);
             }
-            await signOut(auth); // This will trigger the useEffect to stop checking
-            setIsLoading(false); // Manually stop loading here
+            await signOut(auth);
+            setIsLoading(false);
         }
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             setLoginError(`เกิดข้อผิดพลาดในการล็อกอิน: ${error.message}`);
         }
-        setIsLoading(false); // Stop loading on any error
+        setIsLoading(false);
     }
   };
 
@@ -129,12 +122,10 @@ export default function LoginPage() {
     if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
         sessionStorage.setItem('isAdminLoggedIn', 'true');
         try {
-            // We still sign in to keep the auth state consistent
             await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
         } catch (error) {
             console.warn("Admin sign-in warning:", error);
         }
-        // The useEffect will handle the redirect
     } else {
          setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
          setIsLoading(false);
