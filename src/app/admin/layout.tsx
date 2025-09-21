@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             setIsAuthorized(true);
         } else {
              // Otherwise, if not loading and no user/session, redirect
-            router.push('/');
+            router.push('/login');
         }
     }, [user, loading, router]);
 
@@ -52,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const handleLogout = async () => {
         await signOut(auth);
         sessionStorage.removeItem('isAdminLoggedIn');
-        router.push('/');
+        router.push('/login');
     };
 
     const handleViewAsUser = async () => {

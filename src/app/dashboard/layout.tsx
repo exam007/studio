@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             // If loading is finished and there's still no user, they are not logged in.
             // Redirect them to the login page and finish checking.
             if (!user) {
-                router.push('/');
+                router.push('/login');
                 // No need to set isChecking to false here, as the component will unmount.
                 return;
             }
@@ -62,7 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     // If they are not in the database, they are unauthorized.
                     // Log them out and send to the login page.
                     await signOut(auth);
-                    router.push('/');
+                    router.push('/login');
                     // No need to set isChecking to false here.
                     return;
                 }
@@ -81,7 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const handleLogout = async () => {
         await signOut(auth);
         sessionStorage.removeItem('isAdminLoggedIn'); // Also clear admin session
-        router.push('/');
+        router.push('/login');
     };
 
     const handleSwitchToAdminView = async () => {
