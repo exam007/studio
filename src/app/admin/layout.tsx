@@ -55,19 +55,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push('/login');
     };
 
-    const handleViewAsUser = async () => {
-        try {
-            // We must sign in to create a consistent auth state for the user dashboard layout.
-            await signInWithEmailAndPassword(auth, 'narongtorn.s@attorney285.co.th', '12345678');
-            router.push('/dashboard?tab=all-quizzes');
-        } catch (error) {
-             toast({
-                title: "เกิดข้อผิดพลาด",
-                description: "ไม่สามารถสลับมุมมองได้",
-                variant: "destructive"
-            });
-            console.error("Failed to sign in for user view:", error);
-        }
+    const handleViewAsUser = () => {
+        // The admin is already logged in, so we can just navigate to the user dashboard.
+        // The dashboard layout will correctly interpret the admin's session.
+        router.push('/dashboard?tab=all-quizzes');
     };
 
     const isActive = (path: string, tab?: string) => {
