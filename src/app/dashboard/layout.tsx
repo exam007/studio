@@ -11,61 +11,26 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ref, get } from "firebase/database";
 
-const isUserRegistered = async (uid: string): Promise<boolean> => {
-    if (!uid) return false;
-    try {
-        const userRef = ref(db, `users/${uid}`);
-        const snapshot = await get(userRef);
-        return snapshot.exists();
-    } catch (error) {
-        console.error("Error checking registration:", error);
-        return false;
-    }
-};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const { user, loading } = useAuth();
     const [isAdmin, setIsAdmin] = useState(false);
-    const [isChecking, setIsChecking] = useState(true); // Manages loading screen
 
     useEffect(() => {
-        const checkAuthorization = async () => {
-            if (loading) {
-                return; 
-            }
+        if (loading) {
+            return; 
+        }
 
-            if (!user) {
-                router.push('/login');
-                setIsChecking(false);
-                return;
-            }
-            
-            const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
-            setIsAdmin(adminStatus);
-            
-            let authorized = false;
-            if (adminStatus) {
-                authorized = true;
-            } else {
-                const registered = await isUserRegistered(user.uid);
-                if (registered) {
-                    authorized = true;
-                } else {
-                    await signOut(auth);
-                    router.push('/login');
-                    setIsChecking(false); // Stop loading if user is not authorized
-                    return;
-                }
-            }
-            
-            if(authorized){
-                setIsChecking(false);
-            }
-        };
-
-        checkAuthorization();
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+        
+        const adminStatus = user.email === 'narongtorn.s@attorney285.co.th';
+        setIsAdmin(adminStatus);
+        
     }, [user, loading, router]);
 
 
@@ -80,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.push('/admin/dashboard');
     }
 
-    if (isChecking) {
+    if (loading) {
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">

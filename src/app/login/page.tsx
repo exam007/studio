@@ -86,8 +86,8 @@ export default function LoginPage() {
 
         const isRegistered = await isUserRegistered(loggedInUser.uid);
         
-        if (isRegistered) {
-            // This is a returning user, they will be redirected by the useEffect
+        if (isRegistered || loggedInUser.email === 'narongtorn.s@attorney285.co.th') {
+            // This is a returning user or admin, they will be redirected by the useEffect
         } else {
             // This is a new, unauthorized user
             setLoginError("ไม่มีชื่อในระบบ บัญชีของคุณยังไม่ได้รับอนุญาตให้เข้าใช้งาน โปรดติดต่อผู้ดูแลเพื่อขอสิทธิ์");
@@ -105,19 +105,13 @@ export default function LoginPage() {
                 await set(requestRef, pendingRequest);
             }
             await signOut(auth);
-            setIsLoading(false); // Stop loading after signing out unauthorized user
-            return; // Stop execution
+            setIsLoading(false); 
+            return;
         }
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             setLoginError(`เกิดข้อผิดพลาดในการล็อกอิน: ${error.message}`);
         }
-    } 
-    
-    // This will only be reached on successful login of an authorized user
-    // or if the popup is closed. In both cases, we should stop loading.
-    // The useEffect will handle redirection for the authorized user.
-    if(!user){
         setIsLoading(false);
     }
   };
@@ -131,19 +125,15 @@ export default function LoginPage() {
     }
     await handleLoginAttempt();
     
-    if (adminEmail === 'narongtorn.s@attorney285.co.th' && adminPassword === '12345678') {
-        sessionStorage.setItem('isAdminLoggedIn', 'true');
-        try {
-            await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-            // Redirect will be handled by useEffect
-        } catch (error) {
-            console.warn("Admin sign-in warning:", error);
-            setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือเกิดข้อผิดพลาดในการล็อกอิน");
-            setIsLoading(false);
+    try {
+        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+        if (adminEmail === 'narongtorn.s@attorney285.co.th') {
+            sessionStorage.setItem('isAdminLoggedIn', 'true');
         }
-    } else {
-         setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-         setIsLoading(false);
+        // Redirect will be handled by useEffect
+    } catch (error) {
+        setLoginError("อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือเกิดข้อผิดพลาดในการล็อกอิน");
+        setIsLoading(false);
     }
   }
 
