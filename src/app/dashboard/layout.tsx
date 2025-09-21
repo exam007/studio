@@ -38,6 +38,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             if (!user) {
                 router.push('/login');
+                setIsChecking(false);
                 return;
             }
             
@@ -54,6 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 } else {
                     await signOut(auth);
                     router.push('/login');
+                    setIsChecking(false); // Stop loading if user is not authorized
                     return;
                 }
             }
